@@ -26,7 +26,10 @@ In particular, the following files can be found:
 * *pooling-ex.py*: a minimalistic command-line program for simulating SNPs genotypes pooling from VCF files
 * *pooling-imputing-ex.ipynb*: a pipeline showing pooling simulation, imputation in pooled data with Beagle and impuatation quality visualization.
 
-Larger data files can be found in [/data](/data). They can be used the same way as the ones created in examples [/examples](/examples) after executing *pooling-ex.py*, however the processing needs to be run on chunked data (use the script *parallel_pooling.py*).
+Larger data files can be found in [/data](/data). They can be used the same way as the ones created in examples [/examples](/examples) after executing *pooling-ex.py*.
+However the processing needs to be run in parallel on chunked data:
+1. From [/data](/data), run `bash ../bin/bcfchunkpara.sh IMP.chr20.snps.gt.vcf.gz ./tmp 1000`. You should get 52 chunks in a `tmp` folder.
+2. Run the script *parallel_pooling.py* with `python3 parallel_pooling.py data/IMP.chr20.snps.gt.vcf.gz data/IMP.chr20.pooled.snps.gt.vcf.gz 4` (if you have 4 cores available on your machine).
 
 
 ## References
