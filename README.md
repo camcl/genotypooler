@@ -26,6 +26,8 @@ In particular, the following files can be found:
 * *pooling-ex.py*: a minimalistic command-line program for simulating SNPs genotypes pooling from VCF files
 * *pooling-imputing-ex.ipynb*: a pipeline showing pooling simulation, imputation in pooled data with Beagle and impuatation quality visualization.
 
+Larger data files can be found in [/data](/data). They can be used the same way as the ones created in examples [/examples](/examples) after executing *pooling-ex.py*, however the processing needs to be run on chunked data (use the script *parallel_pooling.py*).
+
 
 ## References
 * [DNA Sudoku pooling designs](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2704425/pdf/1243.pdf/?tool=EBI)
