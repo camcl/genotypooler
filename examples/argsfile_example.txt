@@ -1,0 +1,8 @@
+results
+IMP.chr20.snps.gt.vcf.gz
+IMP.chr20.snps.gl.vcf.gz
+IMP.chr20.pooled.imputed.vcf.gz
+today
+5
+0.01
+0

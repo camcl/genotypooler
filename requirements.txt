@@ -1,0 +1,7 @@
+pandas
+pysam
+numpy
+seaborn
+img2pdf
+numba
+scikit-learn

@@ -1,0 +1,37 @@
+# Ignore files output from examples
+
+# Example #1 pooling-ex.py
+TEST.chr20.pooled.snps.gl.vcf.gz
+TEST.chr20.pooled.snps.gl.vcf.gz.csi
+TEST.chr20.pooled.snps.gt.vcf.gz
+TEST.chr20.pooled.snps.gt.vcf.gz.csi
+
+# Example #2 pooling-imputing-example.ipynb
+IMP.chr20.pooled.imputed.vcf.gz
+IMP.chr20.pooled.imputed.vcf.gz.csi
+IMP.chr20.pooled.phased.dedup.vcf.gz
+IMP.chr20.pooled.phased.dedup.vcf.gz.csi
+IMP.chr20.pooled.phased.vcf.gz
+IMP.chr20.pooled.phased.vcf.gz.csi
+IMP.chr20.pooled.snps.gl.vcf.gz
+IMP.chr20.pooled.snps.gl.vcf.gz.csi
+IMP.chr20.pooled.unphased.vcf.gz
+IMP.chr20.snps.gl.vcf.gz
+IMP.chr20.snps.gl.vcf.gz.csi
+IMP.chr20.snps.gt.vcf.gz
+IMP.chr20.snps.gt.vcf.gz.csi
+REF.chr20.phased.dedup.vcf.gz
+REF.chr20.phased.dedup.vcf.gz.csi
+REF.chr20.phased.vcf.gz.csi
+REF.chr20.phased.vcf.gz
+REF.chr20.snps.gt.vcf.gz
+REF.chr20.snps.gt.vcf.gz.csi
+reference.panel
+study.population
+
+# Example EDA
+IMP.chr20.pooled.snps.gt.vcf.gz
+IMP.chr20.pooled.snps.gt.vcf.gz.csi
+
+# Plots
+*pdf
