@@ -182,7 +182,11 @@ class VariantRecordPooler(object):
 
 
 class VariantFilePooler(object):
-    """Writes a new VariantFile. Add GL format to the header if necessary"""
+    """
+    Writes a new VariantFile.
+    GP are converted to GL format at writing for compatibility with the imputation methods.
+    Add GL format to the header if necessary.
+    """
     def __init__(self, design_matrix: np.ndarray, vcf_in: str, vcf_out: str,
                  dict_lookup: dict, format_to: str, wd: str = os.getcwd()):
         """
@@ -202,7 +206,7 @@ class VariantFilePooler(object):
         self.n_variants = 0
 
     def _new_header(self):
-        """Modifies VCF header in-place if necessary (new GP format from pooling)"""
+        """Modifies VCF header in-place if necessary (new GL format from pooling)"""
         # GP header record
         # ##FORMAT=<ID=GP,Number=G,Type=Float,Description="Estimated Genotype Probability">
         if self.fmt_to == 'GP':
@@ -211,7 +215,7 @@ class VariantFilePooler(object):
                 if drec != {} and drec['ID'] == 'GT':
                     hrec.remove()
             self.vcf_in.header.add_line(
-                '##FORMAT=<ID=GL,Number=G,Type=Float,Description="Estimated Genotype Probability">')
+                '##FORMAT=<ID=GL,Number=G,Type=Float,Description="Estimated Genotype Likelihood">')
             # GP must be written as GL (literaly) for compatibility with Beagle
         self.header = iter([hrec for hrec in self.vcf_in.header.records])
 

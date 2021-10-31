@@ -7,6 +7,8 @@ TEST.chr20.pooled.snps.gt.vcf.gz
 TEST.chr20.pooled.snps.gt.vcf.gz.csi
 
 # Example #2 pooling-imputing-example.ipynb
+reference.panel
+study.population
 IMP.chr20.pooled.imputed.vcf.gz
 IMP.chr20.pooled.imputed.vcf.gz.csi
 IMP.chr20.pooled.phased.dedup.vcf.gz
@@ -35,3 +37,6 @@ IMP.chr20.pooled.snps.gt.vcf.gz.csi
 
 # Plots
 *pdf
+
+# Results
+results/*

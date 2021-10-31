@@ -1,8 +1,6 @@
 import subprocess
-import numpy as np
 import os
 
-from genotypooler.poolSNPs import parameters as prm
 from genotypooler.persotools.files import *
 
 """
@@ -129,69 +127,6 @@ def pick_sample(indir, filein, sampleid):
                      ])
     subprocess.run(cmd1, shell=True, cwd=indir)
     subprocess.run(cmd2, shell=True, cwd=indir)
-
-
-def stratified_aaf_sampling(f_gz: str, wd: str, binning: bool = False) -> None:
-    """
-    Samples markers from a VCF-file by selecting an equal number of
-    markers for each 0.1-MAF interval. Total number of markers depends
-    on the global chunk size parameter.
-    :param f_gz: input VCF-file with all markers
-    :param wd: path to working directory
-    :param binning: boolean for splitting the original data set into AAF-binned layers
-    :return: None
-    """
-    os.chdir(wd)
-    print(wd)
-    extract_header(os.path.join(prm.DATA_PATH, 'gt', 'ALL.chr20.snps.gt.vcf.gz'),
-                   'headers.ALL.chr20.snps.gt.chunk{}.strat.vcf'.format(prm.CHK_SZ),
-                   wd)
-    bins = np.arange(0.0, 1.0, 0.1)
-    for b in bins:
-        print('interval for AAF: [{}, {})'.format(b, b+0.99))  # 0.99 and not 0.1: avoid intervals q/Q overlapping
-        cmd1 = ' '.join(['bcftools',
-                         'view -Oz -o',
-                         f_gz.replace('.vcf.gz', '.maf_{}_{}.vcf.gz'.format(b, b+0.99)),
-                         '-q {} -Q {}'.format(b, b+0.99),
-                         f_gz
-                         ])
-        #TODO: what is done here?
-        tmp = ' '.join(['cat ./bins_for_chunk10000/chunk{}.vcf'.format(b),
-                        '| sort -R | head -{}'.format(prm.CHK_SZ // len(bins)),
-                        '> chunk{}.vcf'.format(b)
-                        ])  # for generating strat_chunk1000 from strat_chunk10000
-
-        cmd2 = ' '.join(['bcftools view -H',
-                         f_gz.replace('.vcf.gz', '.maf_{}_{}.vcf.gz'.format(b, b+0.99)),
-                         '| sort -R | head -{}'.format(prm.CHK_SZ // len(bins)),
-                         '> chunk{}.vcf'.format(b)
-                         ])
-
-        if binning:
-            subprocess.run(cmd1, shell=True, cwd=wd)
-        subprocess.run(tmp, shell=True, cwd=wd)
-        # subprocess.run(cmd2, shell=True, cwd=wd)
-
-    subprocess.run(' '.join(['cat headers.ALL.chr20.snps.gt.chunk{}.strat.vcf '.format(prm.CHK_SZ),
-                             ' '.join(['chunk{}.vcf'.format(i) for i in bins]),
-                             '> TMP.chr20.snps.gt.strat.vcf']),
-                   shell=True,
-                   cwd=wd)
-
-    delete_file('ALL.chr20.snps.gt.chunk{}.vcf.gz.csi'.format(prm.CHK_SZ))
-
-    bgzip('TMP.chr20.snps.gt.strat.vcf'.format(prm.CHK_SZ),
-          'ALL.chr20.snps.gt.chunk{}.vcf.gz'.format(prm.CHK_SZ),
-          wd)
-    sort('ALL.chr20.snps.gt.chunk{}.vcf.gz'.format(prm.CHK_SZ),
-         wd)
-    index('ALL.chr20.snps.gt.chunk{}.vcf.gz'.format(prm.CHK_SZ),
-          wd)
-    delete_file('headers.ALL.chr20.snps.gt.chunk{}.strat.vcf'.format(prm.CHK_SZ))
-    print('Stratification ended\n\n'.ljust(80, '.'))
-    # delete_file('TMP.chr20.snps.gt.strat.vcf')
-    # for i in bins:
-    #     delete_file('chunk{}.vcf'.format(i))
 
 
 def rename_samples(file_in: str, file_out:str, wd: str, suffix:str) -> None:
