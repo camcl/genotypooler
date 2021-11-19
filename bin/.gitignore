@@ -1,0 +1,3 @@
+beagle_pipeline_per_sample.sh
+merge_files_indir.sh
+run_beagle_pipeline_per_sample.sbatch
