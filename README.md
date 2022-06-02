@@ -15,11 +15,13 @@ and _psi_=((2, 2, 0), (2, 2, 0)) is the pooling pattern e.g. 2 row-pools have ge
 ## Set up
 * a Python 3.6 environment with packages listed in [requirements.txt](requirements.txt), e.g. for a Linux-based OS from the **genotypooler** folder:
 
-(if `venv` for Python 3.6 is not installed: `apt install python3.6-venv`)
+(if `venv` for Python 3.6 is not installed: `apt install libpython3.6-dev python3.6-venv`)
 
 `/usr/bin/python3.6 -m venv venv3.6`
 
 `source venv3.6/bin/activate`
+
+`pip install --upgrade pip`
 
 `pip install -r requirements.txt`
 
