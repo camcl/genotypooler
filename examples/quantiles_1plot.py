@@ -189,12 +189,13 @@ sns.set(font_scale=1.75)  # multiplication factor!
 
 # Histogram of markers count per MAF-bin
 
-gBar = sns.barplot(data=binDF, x='maf_bin', y='bin_counts', color='silver', alpha=0.5)
+plt.bar(x=binDF['maf_bin'], height=binDF['bin_counts'].astype(int, copy=False), color='silver', alpha=0.5)
+
 plt.xticks(rotation=45)
-gBar.set_xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
+plt.xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
                                                                       else 'main'),
                 fontsize=axlabsz)
-gBar.set_ylabel('Counts', fontsize=axlabsz)
+plt.ylabel('Counts', fontsize=axlabsz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'histogram-counts.pdf'))
 plt.show()
