@@ -198,8 +198,7 @@ plt.xlabel('True minor allele frequency in {} population'.format('study' if x_da
 plt.ylabel('Counts', fontsize=axlabsz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'histogram-counts.pdf'))
-plt.show()
-# plt.close()
+plt.close()
 
 # Dispersion of metrics
 
@@ -242,4 +241,4 @@ for dquant, f in dataquants.items():
         labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['beagle'])
         gY.legend(handles, labels, loc='best', fontsize=legsz)
         plt.savefig(os.path.join(outdir, '{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))
-        plt.show()
+        plt.close()
