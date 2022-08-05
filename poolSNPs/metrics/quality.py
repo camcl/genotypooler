@@ -104,7 +104,6 @@ rootdir = os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))
 sys.path.insert(0, rootdir)
 
 from genotypooler.poolSNPs import dataframe as vcfdf
-from genotypooler.poolSNPs.metrics.misc import normalize, min_max_scale
 from genotypooler.persotools.files import *
 
 ArrayLike = NewType('ArrayLike', Union[Sequence, List, Set, Tuple, Iterable, np.ndarray, int, float, str])

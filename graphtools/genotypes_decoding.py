@@ -86,13 +86,19 @@ print('\r\nCounting genotypes'.ljust(80, '.'))
 # Read and process data
 print('\r\nReading data from {} and {}'.format(truef, pooledf).ljust(80, '.'))
 dftrue = vcfdf.PandasMixedVCF(truef, format='GT')
-dfpooled = vcfdf.PandasMixedVCF(pooledf, format='GT')
+
+try:
+    dfpooled = vcfdf.PandasMixedVCF(pooledf, format='GL')
+    pooled = dfpooled.trinary_encoding()
+except KeyError:
+    dfpooled = vcfdf.PandasMixedVCF(pooledf, format='GT')
+    pooled = dfpooled.trinary_encoding()
+
 n_markers, n_samples = dftrue.genotypes().shape
 
-pooled = dfpooled.hexa_encoding()
 
 if xtype == 'aaf':
-    af_bins = pd.cut(dftrue.aaf.values.squeeze(), bins=x_bins, labels=lab_bins)
+    af_bins = pd.cut(dftrue.aaf.values.squeeze(), bins=x_bins, labels=lab_bins, include_lowest=True)
     binned_af = pd.Series(af_bins, index=dftrue.variants, name='binned_aaf')
 
     pooled = pooled.join(binned_af)
@@ -101,7 +107,7 @@ if xtype == 'aaf':
 
 
 if xtype == 'maf':
-    maf_bins = pd.cut(dftrue.maf.values.squeeze(), bins=x2_bins, labels=lab2_bins)
+    maf_bins = pd.cut(dftrue.maf.values.squeeze(), bins=x2_bins, labels=lab2_bins, include_lowest=True)
     binned_maf = pd.Series(maf_bins, index=dftrue.variants, name='binned_maf')
 
     pooled = pooled.join(binned_maf)

@@ -7,6 +7,17 @@
 
 filein=$1
 pathout=$2
+echo 'Sorting file' $filein
+bcftools view -Oz -o tmp.$filein $filein
+rm $filein*
+bcftools index -f tmp.$filein
+bcftools sort -Oz -o $filein tmp.$filein
+rm tmp.$filein*
+# Remove PR INFO field that causes error
+bcftools view -Oz -o tmp.$filein $filein
+bcftools annotate -x INFO/PR -Oz -o $filein tmp.$filein
+bcftools index -f $filein
+rm tmp.$filein*
 echo 'Counting lines in' $filein
 nblin=$(bcftools query -f '%ID\n' $filein | wc -l)
 chksz=$3

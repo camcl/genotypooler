@@ -1,8 +1,8 @@
 results
-IMP.chr20.snps.gt.vcf.gz
-IMP.chr20.snps.gl.vcf.gz
-IMP.chr20.pooled.imputed.vcf.gz
-today
+Chr1.SNPs.pruned.nomiss.vcf.gz
+Chr1.SNPs.pruned.nomiss.gl.vcf.gz
+Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
+prophaser
 5
 0.01
-0
+1

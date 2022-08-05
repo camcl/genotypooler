@@ -63,7 +63,7 @@ print('\n'.ljust(80, '*'))
 pathout = argsin.pathout
 truegt = argsin.truegt
 truegl = argsin.truegl
-imputed_beagle = argsin.imp1
+imputed_1 = argsin.imp1
 datedir = argsin.date
 rQ = argsin.rollwin
 bS = argsin.bins
@@ -109,7 +109,7 @@ def rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame:
                                    dS1,
                                    bins_step=bS)
     pctY1 = pdf1.binnedX_rolling_quantilY(rollwin=rQ)
-    pctY1['dataset'] = ['beagle'] * pctY1.shape[0]
+    pctY1['dataset'] = ['1'] * pctY1.shape[0]
 
     rollquants = pctY1  # pd.concat([pctY1, pctY2])
 
@@ -118,24 +118,24 @@ def rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame:
 
 # Load data and check
 
-qbeaglegt = qual.QualityGT(truegt, imputed_beagle, 0, idx='chrom:pos')
-qbeaglegl = qual.QualityGL(truegl, imputed_beagle, 0, idx='chrom:pos')
+q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos')
+q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos')
 
-print('\r\n{} variants from {} samples read from {}'.format(len(qbeaglegt.trueobj.variants),
-                                                            len(qbeaglegt.trueobj.samples),
+print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.trueobj.variants),
+                                                            len(q1gt.trueobj.samples),
                                                             os.path.basename(truegt)))
-print('\r\n{} variants from {} samples read from {}'.format(len(qbeaglegt.imputedobj.variants),
-                                                            len(qbeaglegt.imputedobj.samples),
-                                                            os.path.basename(imputed_beagle)))
+print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.imputedobj.variants),
+                                                            len(q1gt.imputedobj.samples),
+                                                            os.path.basename(imputed_1)))
 if compute:
-    bgldiff = qbeaglegt.diff()
+    bgldiff = q1gt.diff()
 
 
-print('\r\n{} variants from {} samples read from {}'.format(len(qbeaglegl.trueobj.variants),
-                                                            len(qbeaglegl.trueobj.samples),
+print('\r\n{} variants from {} samples read from {}'.format(len(q1gl.trueobj.variants),
+                                                            len(q1gl.trueobj.samples),
                                                             os.path.basename(truegl)))
 
-mafS = qbeaglegt.trueobj.maf  # maf_info
+mafS = q1gt.trueobj.maf  # maf_info
 
 # Create bins for barplot
 
@@ -149,12 +149,12 @@ print(countDict)
 # Compute metrics
 
 if compute:
-    metrics = {'precision_score': qbeaglegt.precision,
-               'recall_score': qbeaglegt.recall,
-               'f1_score':  qbeaglegt.f1_score,
-               'concordance': qbeaglegt.concordance(),
+    metrics = {'precision_score': q1gt.precision,
+               'recall_score': q1gt.recall,
+               'f1_score':  q1gt.f1_score,
+               'concordance': q1gt.concordance(),
                'allelic_dos': None,
-               'cross_entropy': qbeaglegl.cross_entropy
+               'cross_entropy': q1gl.cross_entropy
                }
 
 dataquants = {'precision_score': None,  # os.path.join(outdir, 'rolling_quantiles_precision_score.json'),
@@ -170,14 +170,14 @@ dataquants = {'precision_score': None,  # os.path.join(outdir, 'rolling_quantile
 if compute:
     for metric, d in metrics.items():
         if d is not None:
-            yS_beagle = d
-            print(yS_beagle)
+            yS_1 = d
+            print(yS_1)
             # Compute quantiles
             print('Computing quantiles for {}'.format(metric).ljust(80, '.'))
-            pctY_comp = rollquants(mafS, yS_beagle)
+            pctY_comp = rollquants(mafS, yS_1)
             # Compute mean over all markers
             print('Computing means for {}'.format(metric).ljust(80, '.'))
-            pctY_comp['mean'] = yS_beagle.mean()
+            pctY_comp['mean'] = yS_1.mean()
             jsonf = dataquants[metric]
             pctY_comp.to_json(jsonf,
                               orient='records')
@@ -189,16 +189,16 @@ sns.set(font_scale=1.75)  # multiplication factor!
 
 # Histogram of markers count per MAF-bin
 
-gBar = sns.barplot(data=binDF, x='maf_bin', y='bin_counts', color='silver', alpha=0.5)
+plt.bar(x=binDF['maf_bin'], height=binDF['bin_counts'].astype(int, copy=False), color='silver', alpha=0.5)
+
 plt.xticks(rotation=45)
-gBar.set_xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
+plt.xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
                                                                       else 'main'),
                 fontsize=axlabsz)
-gBar.set_ylabel('Counts', fontsize=axlabsz)
+plt.ylabel('Counts', fontsize=axlabsz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'histogram-counts.pdf'))
-plt.show()
-# plt.close()
+plt.close()
 
 # Dispersion of metrics
 
@@ -212,8 +212,8 @@ for dquant, f in dataquants.items():
         gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
                           hue='dataset', palette="deep", linewidth=1)
 
-        for i, dset in enumerate(['beagle']):
-            df = dataf[dataf['dataset'] == dset]
+        for i, dset in enumerate(['1']):
+            df = dataf[dataf['dataset'] == int(dset)]
             meanf[dset] = df['mean'].mean()
             gY.fill_between(df[df.quantiles == 1.0][x_data],
                             df[df.quantiles == 0.0][dquant],
@@ -238,7 +238,7 @@ for dquant, f in dataquants.items():
 
         gY.set(ylim=yscale[dquant])
         handles, labels = gY.get_legend_handles_labels()
-        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['beagle'])
+        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['1'])
         gY.legend(handles, labels, loc='best', fontsize=legsz)
         plt.savefig(os.path.join(outdir, '{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))
-        plt.show()
+        plt.close()

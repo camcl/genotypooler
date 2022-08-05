@@ -55,7 +55,21 @@ class PandasMixedVCF(object):
         return pd.Index(data=vars, dtype=str, name='variants')
 
     @property
-    def af_info(self):
+    def pos(self) -> pd.DataFrame:
+        """
+        Read variants identifiers ordered as in the input file
+        :return:
+        """
+        vcfobj = self.load()
+        vars = self.variants
+        arr = np.zeros((len(vars),), dtype=float)
+        for i, var in enumerate(vcfobj):
+            arr[i] = var.pos
+
+        return pd.DataFrame(arr, index=vars, columns=['positions'], dtype=float)
+
+    @property
+    def af_info(self) -> pd.DataFrame:
         vcfobj = self.load()
         vars = self.variants
         arr = np.zeros((len(vars), ), dtype=float)
@@ -126,9 +140,48 @@ class PandasMixedVCF(object):
                 gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
+        elif self.fmt.upper() == 'GP':
+            gtnan = np.array([np.nan, np.nan, np.nan])
+            gt0 = np.array([0., 0., 0.])
+            gt1 = np.array([0., 1., 0.])
+            gt2 = np.array([0., 0., 2.])
+            for i, var in enumerate(vcfobj):
+                # convert GP to ternary (assume GP format)
+                missing = lambda x: gtnan if 1.0 not in x else (gt0 if x[0] == 1.0 else (gt1 if x[1] == 1.0 else gt2))
+                gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
+                tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
+                arr[i, :] = np.nan_to_num(tri, nan=-1)
         dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
 
         return dftrinary
+
+    def gl_to_hexa_gt(self, x: np.ndarray) -> np.ndarray:
+        """
+        Convert GL (log GP) values to numerical unphased GT:
+        * GT=0/. -> -0.5
+        * GT=0/0 -> 0.0
+        * GT=1/. -> 0.5
+        * GT=0/1 -> 1.0
+        * GT=1/1 -> 2.0
+        :param x: GL values, nd.array([float, float, float])
+        :return: GT, float
+        """
+        gtnan = np.array([np.nan, np.nan, np.nan])
+        gt0 = np.array([0., 0., 0.])
+        gt1 = np.array([0., 1., 0.])
+        gt2 = np.array([0., 0., 2.])
+        if np.equal(x, [-0.30103, -0.30103, -12]).all():
+            return np.array([-0.25, -0.25, 0.])
+        elif np.equal(x, [-12, -0.30103, -0.30103]).all():
+            return np.array([0.0, 0.25, 0.25])
+        elif x[0] == 0.0:
+            return gt0
+        elif x[1] == 0.0:
+            return gt1
+        elif x[2] == 0.0:
+            return gt2
+        else:
+            return gtnan
 
     def hexa_encoding(self) -> pd.DataFrame:
         """
@@ -144,10 +197,26 @@ class PandasMixedVCF(object):
         vcfobj = self.load()
         vars = self.variants
         arr = np.empty((len(vars), len(self.samples)), dtype=float)
-        for i, var in enumerate(vcfobj):
-            # missing are read as None
-            gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
-            arr[i, :] = np.nan_to_num(gts, nan=-0.5).sum(axis=-1)
+        if self.fmt.upper() == 'GT':
+            for i, var in enumerate(vcfobj):
+                # missing are read as None
+                gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
+                arr[i, :] = np.nan_to_num(gts, nan=-0.5).sum(axis=-1)
+        elif self.fmt.upper() == 'GL':
+            for i, var in enumerate(vcfobj):
+                # convert GL to trinary (assume log-GL format according to VCF4.1 specifications)
+                missing = lambda x: self.gl_to_hexa_gt(x)
+                gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
+                tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
+                arr[i, :] = np.nan_to_num(tri, nan=-1)
+        elif self.fmt.upper() == 'GP':
+            log10func = lambda x: np.log10(x) if x > 1e-12 else -12.0
+            for i, var in enumerate(vcfobj):
+                # convert GL to trinary (assume log-GL format according to VCF4.1 specifications)
+                missing = lambda x: self.gl_to_hexa_gt(log10func(x))
+                gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
+                tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
+                arr[i, :] = np.nan_to_num(tri, nan=-1)
         dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
 
         return dfhexa

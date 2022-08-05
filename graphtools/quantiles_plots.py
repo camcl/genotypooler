@@ -90,9 +90,6 @@ print('\r\nData written to {}'.format(outdir))
 
 # Plot styling
 
-# General parameters
-plt.style.use('./manus-style.mplstyle')
-
 # Specific to this plotting script
 sns.set(rc={'figure.figsize': (10, 8)})  # specific to this plotting sripts
 sns.set_style('whitegrid')
@@ -119,7 +116,7 @@ def rollquants(dX: pd.DataFrame, dS1: pd.Series, dS2: pd.Series) -> pd.DataFrame
                                    dS2,
                                    bins_step=bS)
     pctY2 = pdf2.binnedX_rolling_quantilY(rollwin=rQ)
-    pctY2['dataset'] = ['phaser'] * pctY2.shape[0]
+    pctY2['dataset'] = ['prophaser'] * pctY2.shape[0]
 
     rollquants = pd.concat([pctY1, pctY2])
 
@@ -155,9 +152,9 @@ mafS = qbeaglegt.trueobj.maf
 if compute:
     metrics = {
         'concordance': {'beagle': qbeaglegt.concordance(),
-                        'phaser': qphasergt.concordance()},
+                        'prophaser': qphasergt.concordance()},
         'cross_entropy': {'beagle': qbeaglegl.cross_entropy,
-                          'phaser': qphasergl.cross_entropy}
+                          'prophaser': qphasergl.cross_entropy}
     }
 
 dataquants = {
@@ -194,7 +191,7 @@ for dquant, f in dataquants.items():
 
         gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
                           hue='dataset', palette="deep", linewidth=1)
-        for i, dset in enumerate(['beagle', 'phaser']):
+        for i, dset in enumerate(['beagle', 'prophaser']):
             df = dataf[dataf['dataset'] == dset]
             meanf[dset] = df['mean'].mean()
             gY.fill_between(df[df.quantiles == 1.0][x_data],
@@ -222,7 +219,7 @@ for dquant, f in dataquants.items():
         #     gY.set(yscale="log")
         handles, labels = gY.get_legend_handles_labels()
         labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['beagle'])
-        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['phaser'])
+        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['prophaser'])
         gY.legend(handles, labels, loc='lower right' if dquant == 'concordance' else 'upper right', fontsize=legsz)
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, '{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))

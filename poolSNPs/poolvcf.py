@@ -149,8 +149,8 @@ class VariantRecordPooler(object):
                                                                       self.var.id,
                                                                       self.var.ref,
                                                                       self.var.alts[0],
-                                                                      int(self.var.qual),
-                                                                      self.var.filter.keys()[0],
+                                                                      int(self.var.qual) if self.var.qual is not None else '.',
+                                                                      self.var.filter.keys()[0] if self.var.filter.keys() != [] else '.',
                                                                       info,
                                                                       'GL')  # GL for compatibility with Beagle
         # var.__str__()
