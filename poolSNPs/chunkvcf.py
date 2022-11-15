@@ -6,9 +6,6 @@ sys.path.insert(0, rootdir)
 
 nb_cores = os.cpu_count()
 
-from genotypooler.poolSNPs import parameters as prm
-from genotypooler.poolSNPs import pybcf
-
 from genotypooler.persotools.files import delete_file, FilePath
 
 '''

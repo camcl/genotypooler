@@ -5,7 +5,7 @@ sys.path.insert(0, rootdir)
 import pandas as pd
 import numpy as np
 
-from VCFPooling.poolSNPs.metrics import quality
+from genotypooler.poolSNPs.metrics import quality
 import subprocess
 import argparse
 import matplotlib.pyplot as plt
