@@ -18,7 +18,7 @@ Usage:
 $ python3 -u imputation_quality.py <path to directory> <VCF file with true genotypes> <VCF file with imputed genotypes> <path to script converting GT to GL> <ID type for variants>
 
 Ex.
-$ python3 -u ../poolSNPs/imputation_quality.py ./ IMP.chr20.snps.gt.vcf.gz IMP.chr20.pooled.imputed.vcf.gz ../bin/gt_to_gl.sh 'id'
+$ python3 -u  imputation_quality.py ./ IMP.chr20.snps.gt.vcf.gz IMP.chr20.pooled.imputed.vcf.gz ../bin/gt_to_gl.sh 'id'
 """
 
 parser = argparse.ArgumentParser(description='Compute and plot'
