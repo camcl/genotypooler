@@ -1,18 +1,18 @@
 """
 How does pooling decode the data? How "bad" does pooling make the data? What kind of missing data given the allele frequency?
 
+AAF/MAF-bins are computed from the file with true genotypes.
+Genotype proportions are computed in each bin in the 'pooled' data set
+(not necessarily actually pooled, can be any data as long as the variants are identical to the true ones)
+
 Usage example:
 $ python3 -u genotypes_decoding.py /home/camille/PoolImpHuman/data/20200812/IMP.chr20.snps.gt.vcf.gz /home/camille/PoolImpHuman/data/20200812/IMP.chr20.pooled.snps.gt.vcf.gz /home/camille/PoolImpHuman/results/20200812
 $ python3 -u genotypes_decoding.py /home/camille/PoolImpHuman/data/20200812/IMP.chr20.snps.gt.vcf.gz /home/camille/PoolImpHuman/data/20200812/IMP.chr20.missingHD.fullLD.snps.gt.vcf.gz /home/camille/PoolImpHuman/results/20200812
 """
 
-import numpy as np
 import pandas as pd
-from sklearn.metrics import multilabel_confusion_matrix, confusion_matrix
-from sklearn.preprocessing import *
-from scipy.stats import *
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, to_rgba_array, to_rgba
+from matplotlib.colors import ListedColormap, to_rgba
 import seaborn as sns
 import os, sys
 import argparse
@@ -38,7 +38,7 @@ pooledf = argsin.pooledfile
 # '/home/camille/1000Genomes/src/genotypooler/examples/IMP.chr20.pooled.snps.gt.vcf.gz'
 outdir = argsin.outdir
 if not os.path.exists(outdir):
-    os.mkdir(outdir)
+    os.makedirs(outdir)
 print('\r\nFigures will be saved in {}'.format(outdir).ljust(80, '.'))
 
 
@@ -108,11 +108,15 @@ if xtype == 'aaf':
 
 if xtype == 'maf':
     maf_bins = pd.cut(dftrue.maf.values.squeeze(), bins=x2_bins, labels=lab2_bins, include_lowest=True)
-    binned_maf = pd.Series(maf_bins, index=dftrue.variants, name='binned_maf')
+    binned_maf = pd.Series(maf_bins, index=dfpooled.variants, name='binned_maf') # dftrue.variants
 
     pooled = pooled.join(binned_maf)
     pooled['dataset'] = ['pooled'] * pooled.shape[0]
     pooled = pooled.reset_index().set_index(['variants', 'binned_maf', 'dataset'])
+
+# test
+print(binned_maf)
+print(pooled)
 
 # Initialize counts for each AF bin and each genotype
 print('\r\nCounting genotypes'.ljust(80, '.'))
@@ -158,7 +162,8 @@ ax.set_ylabel('Proportions of genotypes scaled per {}-bin'.format(xtype.upper())
 plt.title('Genotypes proportions in the study population', fontsize=titlesz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'genotypes_hexa_scaled_proportions.pdf'))
-plt.show()
+# plt.show()
+plt.close()
 
 ax_scaled = dfcounts_sized.plot(kind='bar', stacked=True, rot=45,
                                 color=barcolors, style=dashes_styles)
@@ -168,4 +173,5 @@ plt.title('Genotypes proportions in the study population (total number of genoty
           fontsize=titlesz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'genotypes_hexa_proportions.pdf'))
-plt.show()
+# plt.show()
+plt.close()

@@ -2,8 +2,8 @@
 /home/camille/MagicWheat/src/genotypooler/examples/Chr1.SNPs.pruned.nomiss.vcf.gz
 /home/camille/MagicWheat/src/genotypooler/examples/Chr1.SNPs.pruned.nomiss.gl.vcf.gz
 /home/camille/MagicWheat/src/genotypooler/examples/Chr1.SNPs.pruned.nomiss.pooled.vcf.gz
+/home/camille/MagicWheat/src/genotypooler/examples/beagle-with-map/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
 /home/camille/MagicWheat/src/genotypooler/examples/prophaser/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
-/home/camille/MagicWheat/src/genotypooler/examples/prophaser/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
-prophaser
+beagle-vs-prophaser
 0.01
 1

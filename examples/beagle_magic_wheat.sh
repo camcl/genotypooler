@@ -80,7 +80,7 @@ echo '..........................................................................
 echo 'Beagle .jar file used at:' $beaglejar
 ### impute=true must be used with gt= and ref= (Beagle4.1 documentation)
 echo ''
-java -Xss5m -jar $beaglejar gt=Chr$chrom.SNPs.pruned.nomiss.pooled.cfgt.vcf.gz ref=Chr$chrom.Founders.phased.vcf.gz map=$chrom_interpolated_wheat_map_plink.map impute=true gprobs=true out=Chr$chrom.SNPs.pruned.nomiss.pooled.imputed
+java -Xss5m -jar $beaglejar gt=Chr$chrom.SNPs.pruned.nomiss.pooled.cfgt.vcf.gz ref=Chr$chrom.Founders.phased.vcf.gz map=1_interpolated_wheat_map_plink.map impute=true gprobs=true out=Chr$chrom.SNPs.pruned.nomiss.pooled.imputed
 bcftools index -f Chr$chrom.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
 impimpfmt=$( bcftools query -f '%LINE\n' Chr$chrom.SNPs.pruned.nomiss.pooled.imputed.vcf.gz | head -1 | cut -f9 )
 echo 'FORMAT in the imputed target file:' $impimpfmt

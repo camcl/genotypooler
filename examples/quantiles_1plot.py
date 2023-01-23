@@ -135,7 +135,8 @@ print('\r\n{} variants from {} samples read from {}'.format(len(q1gl.trueobj.var
                                                             len(q1gl.trueobj.samples),
                                                             os.path.basename(truegl)))
 
-mafS = q1gt.trueobj.maf  # maf_info
+mafS = q1gt.trueobj.maf
+print(mafS)
 
 # Create bins for barplot
 
@@ -149,9 +150,9 @@ print(countDict)
 # Compute metrics
 
 if compute:
-    metrics = {'precision_score': q1gt.precision,
-               'recall_score': q1gt.recall,
-               'f1_score':  q1gt.f1_score,
+    metrics = {#'precision_score': q1gt.precision,
+               #'recall_score': q1gt.recall,
+               #'f1_score':  q1gt.f1_score,
                'concordance': q1gt.concordance(),
                'allelic_dos': None,
                'cross_entropy': q1gl.cross_entropy
@@ -178,6 +179,7 @@ if compute:
             # Compute mean over all markers
             print('Computing means for {}'.format(metric).ljust(80, '.'))
             pctY_comp['mean'] = yS_1.mean()
+            print(pctY_comp)
             jsonf = dataquants[metric]
             pctY_comp.to_json(jsonf,
                               orient='records')

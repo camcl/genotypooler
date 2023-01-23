@@ -1,7 +1,7 @@
 # genotypooler
 
 ## Description
-This project implements SNP genotypes pooling simulation in the [DNA Sudoku style by Y. Erlich](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2704425/pdf/1243.pdf/?tool=EBI).
+This project implements a simulation of SNP genotype pooling with a simple shifted transversal design.
 The block size chosen for the pooling design is 4*4, with 8 pools and a design weight of 2.
 The encoding and decoding part of the pooling procedure can be represented as follows: ![Pooling simulation on genotypes in the DNA Sudoku style](pooling-sim-gtgl.png)
 where {0, 1, 2, -1} are the allelic dosages from the true genotypes values at one SNP of any sample in (a). {0, 1, 2, -1} stand for 
@@ -51,3 +51,4 @@ However the processing needs to be run in parallel on chunked data:
 * Beagle 4.1 articles for [phasing](https://linkinghub.elsevier.com/retrieve/pii/S0002929707638828) and [imputation](https://www.cell.com/ajhg/fulltext/S0002-9297(15)00491-7) 
 * Beagle 4.1 [documentation and binaries](https://faculty.washington.edu/browning/beagle/b4_1.html)
 * The [1000 Genomes Project](https://www.internationalgenome.org/) and its [VCF phase 3 data release](ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/).
+* Our paper in BMC Bioinformatics: ["A joint use of pooling and imputation for genotyping SNPs"](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04974-7)

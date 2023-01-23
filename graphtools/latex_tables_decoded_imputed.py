@@ -33,7 +33,7 @@ compute <>
 
 Beware that strings for paths should be written just as text (without quotes!) in the argsfile!
 
-Command line usage (assuming the current directory is genotypooler/manus)
+Command line usage (assuming the current directory is genotypooler/graphtools)
 $ python3 -u latex_tables_decoded_imputed.py @tablesargsfile.txt
 '''
 
@@ -63,7 +63,7 @@ truegt = os.path.expanduser(argsin.truegt)
 truegl = os.path.expanduser(argsin.truegl)
 pooledgl = os.path.expanduser(argsin.pooledgl)
 imputed_gtgp1 = os.path.expanduser(argsin.imp1)  # Beagle
-imputed_gtgp2 = os.path.expanduser(argsin.imp2)  # Phaser
+imputed_gtgp2 = os.path.expanduser(argsin.imp2)  # prophaser
 datedir = argsin.date
 bins_step = argsin.bins
 compute = argsin.compute
@@ -98,8 +98,8 @@ if not os.path.exists(outdir):
 # # pooled can also be the file with full LD and missing HD
 # # pooledgt = None  # '~/PoolImpHuman/data/20201029/sHG01063.IMP.chr20.missingHD.fullLD.snps.gt.vcf.gz' # Deprecated
 # pooledgl = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.pooled.snps.gl.vcf.gz')  # '../examples/IMP.chr20.pooled.snps.gl.vcf.gz'
-# # imputation with Beagle or with Phaser
-# imputed_gtgp1 = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.pooled.imputed.vcf.gz')  # '../examples/IMP.chr20.pooled.imputed.vcf.gz'  # Phaser
+# # imputation with Beagle or with prophaser
+# imputed_gtgp1 = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.pooled.imputed.vcf.gz')  # '../examples/IMP.chr20.pooled.imputed.vcf.gz'  # prophaser
 # imputed_gtgp2 = os.path.expanduser('~/PoolImpHuman/data/20200710-rep/IMP.chr20.pooled.imputed.vcf.gz')  # '../examples/IMP.chr20.pooled.imputed.vcf.gz'  # Beagle
 
 
@@ -181,13 +181,13 @@ if compute:
     sExact1.name = 'exact_matches'  # counts exactly imputed only
     # exact_matches1 = qual.QuantilesDataFrame(dX, sExact1)
     dfmatch1 = dBinsX.join(sExact1).groupby(by='binned_' + x_data).sum()
-    dfmatch1['dataset'] = 'phaser'
+    dfmatch1['dataset'] = '1'
 
     sExact2 = counts_unassayed_impok2 #/ counts_not_decoded2
     sExact2.name = 'exact_matches'  # counts exactly imputed only
     # exact_matches2 = qual.QuantilesDataFrame(dX, sExact2)
     dfmatch2 = dBinsX.join(sExact2).groupby(by='binned_' + x_data).sum()
-    dfmatch2['dataset'] = 'beagle'
+    dfmatch2['dataset'] = '2'
 
     dfmatches = pd.concat([dfmatch1, dfmatch2])
     print('\r\nAverage number of markers that are additionally imputed correctly over all samples:')

@@ -8,6 +8,7 @@ rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
 sys.path.insert(0, rootdir)
 
 from genotypooler.poolSNPs import chunkvcf as chkvcf
+from genotypooler.poolSNPs import pybcf
 from genotypooler.persotools.files import *
 
 """
@@ -89,6 +90,20 @@ class PandasMixedVCF(object):
             # arr[i, :] = var.gt_phases
 
         return pd.DataFrame(arr, index=vars, columns=self.samples, dtype=bool)
+
+    @property
+    def alleles(self) -> pd.DataFrame:
+        """
+        Read ref-alt alleles for each variant
+        :return: tuple, reference and alternate allele
+        """
+        vcfobj = self.load()
+        vars = self.variants
+        vars_alls = []
+        for i, var in enumerate(vcfobj):
+            vars_alls.append(var.alleles)
+
+        return pd.DataFrame(vars_alls, index=vars, columns=['ref', 'alt'], dtype=str)
 
     def vcf2dframe(self) -> tuple:
         # TODO: deprecate
@@ -291,6 +306,14 @@ class PandasMixedVCF(object):
         maf = self.aaf_to_maf(dfafinfo['af_info'], name='maf_info')
         return maf.to_frame()
 
+    @property
+    def minor_allele(self) -> pd.DataFrame: # returns 0 if the ref allele is the minor allele, else 1
+        aaf_val = self.aaf.values.flatten()
+        minor_val = [1 if x <= 0.5 else 1 for x in aaf_val]
+        dfminor = pd.DataFrame(data=minor_val, index=self.variants, columns=['minor_allele'], dtype=int)
+
+        return dfminor
+
 
 class PandasMinorVCF(PandasMixedVCF):
     """
@@ -334,3 +357,80 @@ class PandasMinorVCF(PandasMixedVCF):
         dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
 
         return dftrinary
+
+
+class PandasToVCF(object):
+    """
+    Writes a new VariantFile from a dataframe with samples name and (phased) GT.
+    # TODO: GP are converted to GL format at writing for compatibility with the imputation methods.
+    # TODO: Add GL format to the header if necessary.
+    """
+    def __init__(self, vcf_in: str, vcf_out: str, df_to_write: pd.DataFrame,
+                 format_to: str, phased: bool, wd: str = os.getcwd()):
+        """
+        The NonOverlapping Repeated Block pooling design applied is provided with the design matrix.
+        Pooling from only GT genotype format to only GT or GP format implemented.
+        """
+        self.vcf_in = pysam.VariantFile(vcf_in)
+        self.path_in = vcf_in
+        self.path_out = vcf_out
+        self.df = df_to_write
+        self.fmt_to = format_to.upper()
+        assert (self.fmt_to == 'GT'), 'Writing to other formats than phased GT not implemented'
+        self.phased = phased
+        assert (self.phased is True), 'Writing to other formats than phased GT not implemented'
+        self.wd = wd
+        self.header = None
+        self.str_header = []
+        self.data = None
+        self.str_data = []
+        self.n_variants = 0
+
+    def _new_header(self):
+        """VCF header (metadata) to write as formatted text lines"""
+        # GP header record
+        for hrec in list(self.vcf_in.header.records):
+            if not str(hrec).startswith('##bcftools_viewCommand'):
+                self.str_header.append(str(hrec))
+        str_header_last = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t'
+        str_header_last += '\t'.join(sample for sample in self.df.columns)
+        str_header_last += '\n'
+        self.str_header.append(str_header_last)
+
+    def _new_data(self):
+        """Genotype data to write as formatted text lines"""
+        str_data = []
+        for n, var in enumerate(self.vcf_in.fetch()):
+            id_var, id_val = self.df.index[n], self.df.values[n]
+            info_fields = ['='.join([str(k), str(np.asarray(v).flatten()[0])]) for k, v in var.info.items()]
+            info = ';'.join([kv for kv in info_fields])
+            str_var = '''{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'''.format(var.chrom,
+                                                                      var.pos,
+                                                                      id_var,
+                                                                      var.ref,
+                                                                      var.alts[0],
+                                                                      int(var.qual) if var.qual is not None else '.',
+                                                                      var.filter.keys()[
+                                                                          0] if var.filter.keys() != [] else '.',
+                                                                      info,
+                                                                      'GT')
+            str_var = str_var + '\t' + '\t'.join([f'{geno[0]}|{geno[1]}' for geno in id_val]) + '\n'
+            self.str_data.append(str_var)
+
+    def write(self) -> None:
+        """Writes genotype data from a pandas DataFrame into an output file"""
+        # load text header and text data to write
+        self._new_header()
+        self._new_data()
+        # write as text-like file
+        with open(self.path_out, 'w') as vcf_out:
+            print('\r\nWriting metadata in {}'.format(self.path_out).ljust(80, '.'))
+            vcf_out.writelines(self.str_header)
+            print('\r\nWriting data in {}'.format(self.path_out).ljust(80, '.'))
+            vcf_out.writelines(list(self.str_data))
+
+        print('Writing data in {}: Done'.format(self.path_out).rjust(80, '.'))
+        # compress and index the VCF file
+        pybcf.bgzip(self.path_out, self.path_out + '.gz', wd=self.wd)
+        pybcf.index(self.path_out + '.gz', wd=self.wd)
+        os.remove(self.path_out)

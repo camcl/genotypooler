@@ -1,11 +1,13 @@
 import subprocess
-import os
+import os, sys
+
+rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
+sys.path.insert(0, rootdir)
 
 from genotypooler.persotools.files import *
 
 """
 Bash commands for bcftools manipulations written as Python-functions.
-Increase readability.
 (pysam should provide samtools commands but it does not work)
 """
 
