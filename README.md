@@ -43,7 +43,7 @@ In particular, the following files can be found:
 Larger data files can be found in [/data](/data). They can be used the same way as the ones created in examples [/examples](/examples) after executing *pooling-ex.py*.
 However the processing needs to be run in parallel on chunked data:
 1. From [/data](/data), run `bash ../bin/bcfchunkpara.sh IMP.chr20.snps.gt.vcf.gz ./tmp 1000`. You should get 53 chunks (0 to 52) in a `tmp` folder.
-2. From [/runtools](/runtools) run the script *parallel_pooling.py* with `python3 parallel_pooling.py ../data/IMP.chr20.snps.gt.vcf.gz ../data/IMP.chr20.pooled.snps.gl.vcf.gz 4` (if you have 4 cores available on your machine). This should output the pooled file **/data/tmp/IMP.chr20.pooled.snps.gl.vcf.gz**. You can copy this file where you want and delete the **/tmp** folder.
+2. From [/runtools](/genotypooler/runtools) run the script *parallel_pooling.py* with `python3 parallel_pooling.py ../data/IMP.chr20.snps.gt.vcf.gz ../data/IMP.chr20.pooled.snps.gl.vcf.gz 4` (if you have 4 cores available on your machine). This should output the pooled file **/data/tmp/IMP.chr20.pooled.snps.gl.vcf.gz**. You can copy this file where you want and delete the **/tmp** folder.
 
 
 ## References

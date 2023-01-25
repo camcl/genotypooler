@@ -7,7 +7,7 @@ import argparse
 import timeit
 
 home_dir = os.path.expanduser("~")
-proj_dir = os.path.join(home_dir, '../')
+proj_dir = os.path.join(home_dir, '../../')
 
 # force PYTHONPATH to look into the project directory for modules
 rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
