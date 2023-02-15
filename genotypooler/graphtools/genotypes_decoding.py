@@ -12,7 +12,7 @@ $ python3 -u genotypes_decoding.py /home/camille/PoolImpHuman/data/20200812/IMP.
 
 import pandas as pd
 import matplotlib
-matplotlib.use('pdf')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, to_rgba
 import seaborn as sns
