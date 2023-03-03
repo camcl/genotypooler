@@ -161,7 +161,7 @@ ax = dfcounts_scaled.plot(kind='bar', stacked=True, rot=45,
                           color=barcolors, style=dashes_styles)  # cmap = sns.set_palette('GnBu_d')
 ax.set_xlabel('True {} allele frequency'.format('alternate' if xtype == 'aaf' else 'minor'), fontsize=axlabsz)
 ax.set_ylabel('Proportions of genotypes scaled per {}-bin'.format(xtype.upper()), fontsize=axlabsz)
-plt.title('Genotypes proportions in the study population', fontsize=titlesz)
+plt.title('Genotypes proportions in the population', fontsize=titlesz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'genotypes_hexa_scaled_proportions.pdf'))
 # plt.show()
@@ -171,7 +171,7 @@ ax_scaled = dfcounts_sized.plot(kind='bar', stacked=True, rot=45,
                                 color=barcolors, style=dashes_styles)
 ax.set_xlabel('True {} allele frequency'.format('alternate' if xtype == 'aaf' else 'minor'), fontsize=axlabsz)
 ax_scaled.set_ylabel('Proportion of genotypes', fontsize=axlabsz)
-plt.title('Genotypes proportions in the study population (total number of genotypes = {})'.format(n_samples * n_markers),
+plt.title('Genotypes proportions in the population (total number of genotypes = {})'.format(n_samples * n_markers),
           fontsize=titlesz)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, 'genotypes_hexa_proportions.pdf'))
