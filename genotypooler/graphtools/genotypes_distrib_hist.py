@@ -10,6 +10,9 @@ $ python3 -u genotypes_decoding.py /home/camille/PoolImpHuman/data/20200812/IMP.
 $ python3 -u genotypes_decoding.py /home/camille/PoolImpHuman/data/20200812/IMP.chr20.snps.gt.vcf.gz /home/camille/PoolImpHuman/data/20200812/IMP.chr20.missingHD.fullLD.snps.gt.vcf.gz /home/camille/PoolImpHuman/results/20200812
 """
 
+# TODO: edit description
+# TODO: remove aaf options
+
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -50,6 +53,7 @@ true_labels = ['0/0', '0/1', '1/1']
 pooled_genos = [0.0, 1.0, 2.0, -0.5, 0.5, -1.0]
 pooled_labels = ['0/0', '0/1', '1/1', '0/.', './1', './.']
 mMlabels = ['M/M', 'M/m', 'm/m', 'M/.', './m', './.']  # minor-major allele
+hetlabels = ['M/M', 'm/m', './.']  # minor-major allele for heterozygotes only
 
 # dashes_styles = [(0, ()), (0, ()), (0, ()),  # full GT
 #                  (0, (5, 5)), (0, (5, 5)), (0, (1, 1))  # missing GT
@@ -60,17 +64,20 @@ dashes_styles = ['-', '-', '-',  # full GT
 barcolors = ['#047495', '#00035b', '#748b97',  # full GT
              '#dbb40c', '#c65102', '#80013f'  # missing GT
              ]
+hetbarcolors = ['#047495', '#748b97',  # full GT
+                '#80013f'  # missing GT
+                ]
 barcmap = ListedColormap([to_rgba(co) for co in barcolors])
 
 xtype = 'maf'
 #bin_step = 0.04
 # x_bins = np.arange(0.0, 1.0 + bin_step, bin_step).round(decimals=2)
 x_bins = [0.0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.94, 0.96, 0.98, 1.0]
-x2_bins = [0.0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.5]  # MAF
+x2_bins = [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]  # MAF
 # lab_bins = np.arange(bin_step/2, 1.0, bin_step).round(decimals=2)
 lab_bins = [0.01, 0.03, 0.05, 0.08, 0.15, 0.3, 0.5, 0.7, 0.85, 0.92, 0.95, 0.97, 0.99]
 lab_text = ['-'.join([str(x[0]), str(x[1])]) for x in list(zip(x_bins[:-1], x_bins[1:]))]
-lab2_bins = [0.01, 0.03, 0.05, 0.08, 0.15, 0.3, 0.45]  # MAF
+lab2_bins = [0.025, 0.075, 0.15, 0.25, 0.35, 0.45]  # MAF
 lab2_text = ['-'.join([str(x[0]), str(x[1])]) for x in list(zip(x2_bins[:-1], x2_bins[1:]))]
 
 figsize=4
@@ -143,6 +150,7 @@ if xtype == 'aaf':  # change x-ticks labels
 if xtype == 'maf':  # change x-ticks labels
     dfcounts.index = lab2_text
     dfcounts.columns = mMlabels
+    dfcounts = dfcounts[hetlabels]  # keep only heterozygotes and missing
 
 
 # scale result per bin
@@ -158,7 +166,7 @@ dfcounts_sized = dfcounts / (n_samples * n_markers)
 # Plot processed data
 print('\r\nPlotting results'.ljust(80, '.'))
 ax = dfcounts_scaled.plot(kind='bar', stacked=True, rot=45,
-                          color=barcolors, style=dashes_styles)  # cmap = sns.set_palette('GnBu_d')
+                          color=hetbarcolors, style=dashes_styles)  # cmap = sns.set_palette('GnBu_d')
 ax.set_xlabel('True {} allele frequency'.format('alternate' if xtype == 'aaf' else 'minor'), fontsize=axlabsz)
 ax.set_ylabel('Proportions of genotypes scaled per {}-bin'.format(xtype.upper()), fontsize=axlabsz)
 plt.title('Genotypes proportions in the population', fontsize=titlesz)
@@ -168,7 +176,7 @@ plt.savefig(os.path.join(outdir, 'genotypes_hexa_scaled_proportions.pdf'))
 plt.close()
 
 ax_scaled = dfcounts_sized.plot(kind='bar', stacked=True, rot=45,
-                                color=barcolors, style=dashes_styles)
+                                color=hetbarcolors, style=dashes_styles)
 ax.set_xlabel('True {} allele frequency'.format('alternate' if xtype == 'aaf' else 'minor'), fontsize=axlabsz)
 ax_scaled.set_ylabel('Proportion of genotypes', fontsize=axlabsz)
 plt.title('Genotypes proportions in the population (total number of genotypes = {})'.format(n_samples * n_markers),

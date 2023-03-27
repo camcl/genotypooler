@@ -16,15 +16,6 @@ methods in large pedigrees
     - imputation quality score (IQS): agreement ratio, (-Inf, 1],
     based on the Kappa statistic
 
-
-A New Statistic to Evaluate Imputation Reliability
-IQS:
-The computation of IQS requires the posterior probabilities of AA, AB and BB as output by the imputation program.
---> with Beagle 4.1: gprobs, in dic['corr'] files as GT:DS:GP ex. 0|0:0.51:0.55,0.38,0.07
-gprobs=[true/false]specifies  whether  a  GP  (genotype  probability)
-format  field  will  be included in the output VCF file (default: gprobs=true)
-
-
 MaCH: Using Sequence and Genotype Data to Estimate Haplotypes and Unobserved Genotypes
 1 SNP with alleles A and B. Let n_A/A , n_A/B , n_B/B = number of times
 each possible genotype was sampled after I = n_A/A + n_A/B + n_B/B iterations
@@ -45,50 +36,6 @@ Expected number of counts of allele A: g = (2*n_A/A + n_A/B)/I
     true allele counts and estimated allele counts. This ity can be estimated by
     comparing the variance of the estimated genotype scores with what would be expected if
     genotype scores were observed without error.
-
-
-https://en.wikipedia.org/wiki/Cohen's_kappa
-Cohen's kappa coefficient K is a statistic which measures inter-rater agreement for qualitative (categorical) items.
-Generally thought to be more robust than simple percent agreement calculation, as that coeff takes into account
-the possibility of agreement occuring by chance. But: difficult to interpret indices of agreement?
-If no agreement between the raters other than the one that would be expected by chance: K = 0,
-If K < 0: there is no effective agreement between the raters or the agreement is worse than random.
-Weighted kappa K exists.
-κ's tendency to take the observed categories' frequencies as givens, which can make it unreliable for measuring
-agreement in situations such as the diagnosis of rare diseases. In these situations, κ tends to underestimate
-the agreement on the rare category.
-
-
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html#sklearn.metrics.cohen_kappa_score
-Implementation of Cohen's kappa:
-sklearn.metrics.cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None)
-y1, y2: arrays of same length (n_samples)
-
-
-http://courses.washington.edu/cmling/lab7.html
-Using the python interpreter and the nltk metrics package, calculate inter-annotator agreement (both kappa and alpha).
-Note that AnnotationTask is a type of object, with methods kappa() and alpha().
-When you call nltk.metrics.AnnotationTask() it returns an object of that type, which in the example below is stored
-in the variable task. See: http://www.nltk.org/api/nltk.metrics.html
-
-import nltk
-toy_data = [
-['1', 5723, 'ORG'],
-['2', 5723, 'ORG'],
-['1', 55829, 'LOC'],
-['2', 55829, 'LOC'],
-['1', 259742, 'PER'],
-['2', 259742, 'LOC'],
-['1', 269340, 'PER'],
-['2', 269340, 'LOC']
-]
-task = nltk.metrics.agreement.AnnotationTask(data=toy_data)
-task.kappa()
-task.alpha()
-
-The nltk metrics package also provides for calculating and printing confusion matrices, a way of displaying which labels
- were 'mistaken' for which other ones. Unfortunately, this functionality requires a different format for the input.
- In particular, it wants two lists of labels (in the same order).
 """
 
 import os, sys
@@ -171,14 +118,15 @@ class QualityGT(object):
 
     def concordance(self) -> pd.Series:
         """
-        Compute concordance between true and imputed genotypes
-        i.e. 1 - the Z-norm of the absolute difference of true vs. imputed genotypes?
+        Compute concordance between true and imputed genotypes, that is:
+        (number_of_exact_matches + 0.5 number_of_half_matches) / total_number_of_markers
+        NB: if nonreference discordance rate (NRD): 1 - Z-norm of the absolute difference of true vs. imputed genotypes
         :return:
         """
         # absdiff = self.diff()  # equals 0 when true = imputed, else can be 1 or 2 (very unlikely 2?)
         absdiff = self.diff() / 2  # restricts values to 0.0, 0.5, 1.0
-        # absdiffnorm = absdiff.apply(min_max_scale, axis=1, raw=True)  # homemade minmax scaler
-        absdiffnorm = absdiff.apply(preprocessing.minmax_scale, axis=1, raw=True)  # sklearn minmax scaler
+        absdiffnorm = absdiff
+        # absdiffnorm = absdiff.apply(preprocessing.minmax_scale, axis=1, raw=True)  # sklearn minmax scaler
         discord_score = absdiffnorm.mean(axis=1)  # discordance
         concord_score = 1 - discord_score  # concordance = 1 - discordance
         concord = pd.Series(concord_score, index=self.trueobj.variants, name='concordance')

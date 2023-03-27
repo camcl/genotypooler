@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from collections import Counter
+from scipy.special import logit
 
 # force PYTHONPATH to look into the project directory for modules
 rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
@@ -85,8 +86,8 @@ genotricmap = ListedColormap([to_rgba(co) for co in genocolors[:3]], name='geno_
 
 x_bins = [0.0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.94, 0.96, 0.98, 1.0]
 lab_bins = [0.01, 0.03, 0.05, 0.08, 0.15, 0.3, 0.5, 0.7, 0.85, 0.92, 0.95, 0.97, 0.99]
-x2_bins = [0.0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.5]  # MAF
-lab2_bins = [0.01, 0.03, 0.05, 0.08, 0.15, 0.3, 0.45]  # MAF
+x2_bins = [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]  # MAF
+lab2_bins = [0.025, 0.075, 0.15, 0.25, 0.35, 0.45]  # MAF
 if af_data == 'maf':
     x_bins = x2_bins
     lab_bins = lab2_bins
@@ -254,20 +255,23 @@ if df3 is not None:
     #df3['AF-bin'] = otherbin
     othermaf = df3['maf'].to_frame()
     diffaaf = df3.aaf - df0.aaf
+    ratio_aaf = df3.aaf / df0.aaf  # No aaf should be 0.0 according to the histograms of the genotype distributions
 
     xpos = dftrue.pos.values.flatten()
 
-    plt.scatter(xpos, diffaaf, s=3, label='AAF difference Inbred-Founders')
-    plt.axhline(0.0, c='r', lw=0.5, linestyle='dashed')
+    plt.scatter(xpos, -logit(df3.aaf.values), s=3, c='b', alpha=0.5, label='Inbred lines')
+    plt.scatter(xpos, -logit(df0.aaf.values), s=3, c='g', alpha=0.5, label='Founders')
+    # plt.axhline(0.0, c='r', lw=0.5, linestyle='dashed')
+    plt.xlabel('Genetic position (bp)')
+    plt.ylabel('$-logit(AAF)$')
     plt.legend()
-    plt.savefig(os.path.join(outdir, 'diff-aaf-founders-inbred.pdf'))
+    plt.savefig(os.path.join(outdir, 'logit-aaf-founders-inbred.pdf'))
     plt.close()
 
-    plt.scatter(xpos, diffaaf / df3.aaf.values, s=3, c='b', alpha=0.3, label='AAF variation: Inbred-Founders/Inbred')
-    plt.scatter(xpos, diffaaf / df0.aaf.values, s=3, c='g', alpha=0.3, label='AAF variation: Inbred-Founders/Founders')
+    plt.scatter(xpos, np.log(ratio_aaf), s=3, c='b', alpha=0.8, label='SNP')
     plt.axhline(0.0, c='r', lw=0.5, linestyle='dashed')
     plt.xlabel('Genetic position (bp)')
-    plt.ylabel('Differential allele frequency')
+    plt.ylabel('$log(\\frac{f_I}{f_F})$')
     plt.legend()
-    plt.savefig(os.path.join(outdir, 'diff-ratio-aaf-founders-inbred.pdf'))
-    #plt.show()
+    plt.savefig(os.path.join(outdir, 'log-ratio-aaf-founders-inbred.pdf'))
+    # plt.show()

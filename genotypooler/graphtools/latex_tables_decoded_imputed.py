@@ -77,31 +77,16 @@ x_data = 'maf'
 x_bins = np.arange(0.0, 0.5 + bins_step, bins_step) if x_data in ['maf_info', 'maf'] \
             else np.arange(0.0, 1.0 + bins_step, bins_step)
 # Custom bins for exact matches counts
-x2_bins = [0.0, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.5]  # MAF
-lab2_bins = [0.01, 0.03, 0.05, 0.08, 0.15, 0.3, 0.45]  # MAF
+x2_bins = [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]  # MAF
+lab2_bins = [0.025, 0.075, 0.15, 0.25, 0.35, 0.45]  # MAF
 lab2_fmt = ['{:.2f}-{:.2f}'.format(i, j) for i, j in zip(x2_bins[:-1], x2_bins[1:])]
 
 
 # Configure data/plots paths
 
-# pathout = os.path.expanduser('~/PoolImpHuman/results')
-# datedir = '20210320'
 outdir = os.path.join(pathout, datedir)  # outdir = os.path.join(os.path.expanduser('~/PoolImpHuman/results), datedir)
 if not os.path.exists(outdir):
     os.makedirs(outdir)
-
-# Read files
-
-# # pooled HD scenario
-# truegt = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.snps.gt.vcf.gz')  # '../examples/IMP.chr20.snps.gt.vcf.gz'
-# truegl = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.snps.gl.vcf.gz')  # '../examples/IMP.chr20.snps.gl.vcf.gz'
-# # pooled can also be the file with full LD and missing HD
-# # pooledgt = None  # '~/PoolImpHuman/data/20201029/sHG01063.IMP.chr20.missingHD.fullLD.snps.gt.vcf.gz' # Deprecated
-# pooledgl = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.pooled.snps.gl.vcf.gz')  # '../examples/IMP.chr20.pooled.snps.gl.vcf.gz'
-# # imputation with Beagle or with prophaser
-# imputed_gtgp1 = os.path.expanduser('~/PoolImpHuman/data/20210320/IMP.chr20.pooled.imputed.vcf.gz')  # '../examples/IMP.chr20.pooled.imputed.vcf.gz'  # prophaser
-# imputed_gtgp2 = os.path.expanduser('~/PoolImpHuman/data/20200710-rep/IMP.chr20.pooled.imputed.vcf.gz')  # '../examples/IMP.chr20.pooled.imputed.vcf.gz'  # Beagle
-
 
 # Build Quality and DataFrame objects for analysis
 
