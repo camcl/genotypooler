@@ -5,7 +5,7 @@ import json
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import Divider, Size
+from matplotlib.ticker import FixedLocator
 import argparse
 
 import warnings
@@ -143,7 +143,7 @@ if ydata2 is not None:
     print(heatdata2)
 
 # Draw plot
-sns.set(font_scale=2, style='white')  # increase font size of seaborn labels (overwritten for the ticks on the axes)
+sns.set(font_scale=2, style='ticks')  # increase font size of seaborn labels (overwritten for the ticks on the axes)
 sns.axes_style(style={'xtick.bottom': True,
                       'axes.spines.bottom': True,
                       'axes.facecolor': 'white',
@@ -183,12 +183,12 @@ newax.axis('equal')
 
 ax.set_xlabel('AAF in the study population', fontsize=20)
 ax.set_ylabel('AAF in the simulated population', fontsize=20)
-ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontsize=18)
-ax.set_yticklabels(ax.get_yticklabels(), rotation=45, ha='right', fontsize=18)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontsize=18, rotation_mode='anchor')
+ax.set_yticklabels(ax.get_yticklabels(), rotation=45, ha='right', fontsize=18, rotation_mode='anchor')
+ax.tick_params(axis='both', which='major', pad=3)
 cbar = ax.collections[0].colorbar
-# cbar.ax.tick_params(labelsize=16)
-# ax.figure.axes[-1].yaxis.label.set_size(20)
 newax.legend(loc='upper left', edgecolor='white', fontsize=18)
+plt.grid(which='minor')
 plt.savefig(os.path.join(outdir, f'heatmap-STU-aaf-zoomin-targetline.pdf') if ydata2 is not None
             else os.path.join(outdir, f'heatmap-{pop}-aaf-zoomin-targetline.pdf'))
 plt.show()
