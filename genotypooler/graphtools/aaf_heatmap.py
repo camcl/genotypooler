@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import json
 import seaborn as sns
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import Divider, Size
 import argparse
@@ -128,8 +129,21 @@ if ydata2 is not None:
     fxmin2, fxmax2 = heatdata2.columns[0], heatdata2.columns[-1]
     fymin2, fymax2 = heatdata2.index[-1], heatdata2.index[0]
 
+    # Adjust both axes of the heat map to the same AAF range and display the same ticklabels on x and y axes
+    aafmax = max(fxmax, fxmax2, fymax, fymax2)
+    aafmin = min(fxmin, fxmin2, fymin, fymin2)
+    sqrdf = pd.DataFrame(np.nan,
+                         index=np.arange(aafmax, aafmin - bS, -bS).round(decimals=3),
+                         columns=np.arange(aafmin, aafmax + bS, bS).round(decimals=3)
+                         )
+    # fill in NaN in sqrdf if non-null values available a the same location in heatdata
+    heatdata = sqrdf.combine_first(heatdata).sort_index(axis=0, ascending=False)
+    heatdata2 = sqrdf.combine_first(heatdata2).sort_index(axis=0, ascending=False)
+    print(heatdata)
+    print(heatdata2)
+
 # Draw plot
-sns.set(font_scale=2, style='white')  # increase font size of seaborn labels (overwritten then for the ticks on the axes)
+sns.set(font_scale=2, style='white')  # increase font size of seaborn labels (overwritten for the ticks on the axes)
 sns.axes_style(style={'xtick.bottom': True,
                       'axes.spines.bottom': True,
                       'axes.facecolor': 'white',
@@ -137,13 +151,23 @@ sns.axes_style(style={'xtick.bottom': True,
 
 fig, ax = plt.subplots(figsize=(16, 12))
 
-sns.heatmap(heatdata, annot=False, alpha=0.7, ax=ax, xticklabels=5, yticklabels=5,
+sns.heatmap(heatdata, annot=False, alpha=0.7, ax=ax,
+            xticklabels=[ncol if not i % 5 else '' for i, ncol in enumerate(heatdata.columns)],
+            yticklabels=[ncol if not i % 5 else '' for i, ncol in enumerate(heatdata.columns)][::-1],
+            # every 5th index when the lists are sorted in the same order
+            square=True,
             cmap="plasma_r", cbar=True, cbar_kws={'shrink': .75,
-                                                  'label': 'Imputed data'})  # viridis_r color works too
+                                                  'label': 'Imputed data',  # viridis_r color works too
+                                                  'pad': -0.12})
 if ydata2 is not None:
-    sns.heatmap(heatdata2, annot=False, alpha=0.7, ax=ax, xticklabels=5, yticklabels=5,
+    sns.heatmap(heatdata2, annot=False, alpha=0.7, ax=ax,
+                xticklabels=[ncol if not i % 5 else '' for i, ncol in enumerate(heatdata2.columns)],
+                yticklabels=[ncol if not i % 5 else '' for i, ncol in enumerate(heatdata2.columns)][::-1],
+                square=True,
                 cmap="Greys", cbar=True, cbar_kws={'shrink': .75,
-                                                   'label': 'Pooled data'})
+                                                   # 'label': 'Pooled data',  # location to the right of the colobra cannont be changed
+                                                   'ticks': []})
+    ax.annotate('Pooled data', xy=(0.725, 0.42), xycoords='figure fraction', rotation=90)
 
 newax = fig.add_axes(ax.get_position(), frameon=False)
 newax.patch.set_alpha(0.0)
@@ -157,8 +181,8 @@ sns.lineplot(x=[0.0, 0.5],
              ax=newax)
 newax.axis('equal')
 
-ax.set_xlabel('AAF in study population', fontsize=20)
-ax.set_ylabel('AAF in other population', fontsize=20)
+ax.set_xlabel('AAF in the study population', fontsize=20)
+ax.set_ylabel('AAF in the simulated population', fontsize=20)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontsize=18)
 ax.set_yticklabels(ax.get_yticklabels(), rotation=45, ha='right', fontsize=18)
 cbar = ax.collections[0].colorbar
