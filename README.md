@@ -4,6 +4,7 @@
 This project implements a simulation of SNP genotype pooling with a simple shifted transversal design.
 The block size chosen for the pooling design is 4*4, with 8 pools and a design weight of 2.
 The encoding and decoding part of the pooling procedure can be represented as follows: ![Pooling simulation on genotypes in the DNA Sudoku style](pooling-sim-gtgl.png)
+
 where {0, 2, -1} are the allelic dosages from the true genotypes values at one SNP of any sample in (a). {0, 2, -1} stand for 
 homozygote reference allele, homozygote alternate allele, missing genotype. As we represent a simulation with the genotype data of inbred lines, we assume that the samples are full homozygotes and there is therefore no heterozygous genotype (genotype value 1).
 
