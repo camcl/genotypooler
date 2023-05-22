@@ -132,6 +132,17 @@ class QualityGT(object):
         concord = pd.Series(concord_score, index=self.trueobj.variants, name='concordance')
         return concord
 
+    def marker_wise_concordance(self) -> pd.DataFrame:
+        """
+        Compute concordance between true and imputed genotypes, that is:
+        (number_of_exact_matches + 0.5 number_of_half_matches) / total_number_of_markers
+        NB: if nonreference discordance rate (NRD): 1 - Z-norm of the absolute difference of true vs. imputed genotypes
+        :return:
+        """
+        # absdiff = self.diff()  # equals 0 when true = imputed, else can be 1 or 2 (very unlikely 2?)
+        absdiff = self.diff() / 2  # restricts values to 0.0, 0.5, 1.0
+        return 1 - absdiff
+
     @staticmethod
     def expectation(a: np.ndarray, freq: np.ndarray):
         """
@@ -333,7 +344,7 @@ class QualityGL(object):
     def cross_entropy(self) -> pd.Series:
         """
         For genotypes likelihoods
-        Entropy for the genotypes, aCROSS two populations.
+        Entropy for the genotypes, across two populations.
         Not confuse with intrapop entropy
         entropy = alpha * sum(p_true * log(p_imputed) for every GL for every sample) at 1 marker
         :return:
@@ -346,6 +357,23 @@ class QualityGL(object):
         score = entro.mean(axis=1)
 
         return pd.Series(score, index=self.trueobj.variants, name='cross_entropy')
+
+    @property
+    def marker_wise_cross_entropy(self) -> pd.DataFrame:
+        """
+        For genotypes likelihoods
+        Entropy for the genotypes, across two populations.
+        Not confuse with intrapop entropy
+        entropy = alpha * sum(p_true * log(p_imputed) for every GL for every sample) at 1 marker
+        :return:
+        """
+        true = self.trueobj.genotypes()
+        imputed = self.imputedobj.genotypes()
+        # these come as arrays of tuples
+
+        entro = true.combine(imputed, self.intergl_entropy)
+
+        return entro
 
     @property
     def postg_allelic_dosage(self): # postg_aaf and postg_maf ?
