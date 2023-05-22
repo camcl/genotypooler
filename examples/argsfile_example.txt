@@ -1,8 +1,9 @@
-results
-Chr1.SNPs.pruned.nomiss.vcf.gz
-Chr1.SNPs.pruned.nomiss.gl.vcf.gz
-Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
-prophaser
+../examples/results
+../examples/Chr1.SNPs.pruned.nomiss.vcf.gz
+../examples/Chr1.SNPs.pruned.nomiss.gl.vcf.gz
+../examples/beagle-with-map/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
+../examples/prophaser/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
+beagle-vs-prophaser
 5
 0.01
 1

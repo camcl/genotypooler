@@ -1,0 +1,8 @@
+results
+Chr1.SNPs.pruned.nomiss.vcf.gz
+Chr1.SNPs.pruned.nomiss.gl.vcf.gz
+prophaser/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
+prophaser
+5
+0.01
+1

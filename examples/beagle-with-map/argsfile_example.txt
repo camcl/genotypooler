@@ -1,0 +1,8 @@
+results
+Chr1.SNPs.pruned.nomiss.vcf.gz
+Chr1.SNPs.pruned.nomiss.gl.vcf.gz
+beagle-with-map/Chr1.SNPs.pruned.nomiss.pooled.imputed.vcf.gz
+beagle-with-map
+5
+0.01
+1
