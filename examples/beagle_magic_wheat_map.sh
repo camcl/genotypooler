@@ -3,7 +3,7 @@
 beaglejar=../bin/beagle.11Mar19.69c.jar
 cfgtjar=../bin/conform-gt.jar
 
-modelscale=0.8
+modelscale=1.5
 
 chrom=$( bcftools query -f '%CHROM\n' Chr1.Founders.vcf.gz | head -1 )
 startpos=$( bcftools query -f '%POS\n' Chr1.Founders.vcf.gz | head -1 )

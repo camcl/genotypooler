@@ -19,7 +19,7 @@ compute <>
 
 Beware that strings for paths should be written just as text (without quotes!) in the argsfile!
 
-Command line usage (assuming the current directory is genotypooler/g)
+Command line usage (assuming the current directory is genotypooler/graphtools)
 $ python3 -u quantiles_plots.py @/home/camille/IterDecodeImpute/runs/poolimputeSNPs/results/data/1/cycle2/quantilesargsfile.txt
 """
 

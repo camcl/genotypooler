@@ -31,16 +31,14 @@ homozygote reference allele, homozygote alternate allele, missing genotype. As w
 Some data and scripts are provided as use cases in [/examples](/examples). 
 In particular, the following files can be found:
 * *adaptive_gls.csv*: posterior genotypes probabilities of pooled individuals
-* *ALL.chr20.snps.gt.vcf.gz* and its index *.csi*: a subset of 1000 diallelic SNPs on the chromosome 20 for 2504 unrelated individuals from the 1000 Genomes Prject phase3
-* *TEST.chr20.snps.gt.vcf.gz* and its index *.csi*: a subset of 100 diallelic SNPs on the chromosome 20 for 240 unrelated individuals from the 1000 Genomes Prject phase3
+* *Chr1.Founders.vcf.gz* and its index *.csi*: genotypes of the founder individuals in unphased GT format
+* *Chr1.SNPs.pruned.nomiss.vcf.gz* and its index *.csi*: genotypes of the study samples in unphased GT format
+* *Chr1.SNPs.pruned.nomiss.gl.vcf.gz* and its index *.csi*: genotypes of the study samples in GL format
 * *pooling-ex.py*: a minimalistic command-line program for simulating SNPs genotypes pooling from VCF files
 * *pooling-imputing-ex.ipynb*: a pipeline showing pooling simulation, imputation in pooled data with Beagle and impuatation quality visualization.
-
-Larger data files can be found in [/data](/data). They can be used the same way as the ones created in examples [/examples](/examples) after executing *pooling-ex.py*.
-However the processing needs to be run in parallel on chunked data:
-1. From [/data](/data), run `bash ../bin/bcfchunkpara.sh IMP.chr20.snps.gt.vcf.gz ./tmp 1000`. You should get 53 chunks (0 to 52) in a `tmp` folder.
-2. From [/runtools](/genotypooler/runtools) run the script *parallel_pooling.py* with `python3 parallel_pooling.py ../data/IMP.chr20.snps.gt.vcf.gz ../data/IMP.chr20.pooled.snps.gl.vcf.gz 4` (if you have 4 cores available on your machine). This should output the pooled file **/data/tmp/IMP.chr20.pooled.snps.gl.vcf.gz**. You can copy this file where you want and delete the **/tmp** folder.
-
+* directory *prophaser*: example of file imputed with prophaser
+* directory *beagle-with-map*: example of file imputed with Beagle 4.1
+* *argsfile_example.txt*: file with arguments required for plotting the concordance and the cross-entropy in the imputed study populations
 
 ## References
 * [DNA Sudoku pooling designs](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2704425/pdf/1243.pdf/?tool=EBI)
