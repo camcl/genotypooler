@@ -16,6 +16,7 @@ date <>
 rollwin <>
 bins <>
 compute <>
+mask <>
 
 Beware that strings for paths should be written just as text (without quotes!) in the argsfile!
 
@@ -38,6 +39,7 @@ rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
 sys.path.insert(0, rootdir)
 
 from genotypooler.poolSNPs.metrics import quality as qual
+from genotypooler.poolSNPs import dataframe as vcfdf
 from genotypooler.persotools.files import *
 
 
@@ -54,7 +56,8 @@ parser.add_argument('date', metavar='date', type=str, help='Date of the experime
 parser.add_argument('rollwin', metavar='wq', type=int, help='Number of markers per rolling window', default=1000)  # default option does not work
 parser.add_argument('bins', metavar='bin', type=float, help='Bin size for discretizing MAF', default=0.01)  # default option does not work
 parser.add_argument('compute', metavar='comp', type=int, help='If True, compute quantiles and plots, else runs plotting only', default=1)
-
+parser.add_argument('mask', metavar='mask', type=str, help='File with filtered data (GP format)', default=None)
+parser.add_argument('changed', metavar='chg', type=int, help='If True, mask unchanged priors', default=None)
 
 argsin = parser.parse_args()
 print('\n'.ljust(80, '*'))
@@ -71,13 +74,25 @@ datedir = argsin.date
 rQ = argsin.rollwin
 bS = argsin.bins
 compute = argsin.compute
+fmask = argsin.mask
+changed = argsin.changed
+
+# Create gbool mask for data
+
+if fmask != '.':
+    dfobj = vcfdf.PandasMixedVCF(fmask, format='GP', indextype='chrom:pos', mask=None)
+    gdata = dfobj.genotypes()
+    if changed:
+        gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> keep changed priors only
+    else:
+        gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> keep unchanged priors only
+    print('Number of visible values = ', gbool.sum())
+else:
+    gbool = None
 
 # Data parameters
 
-x_data = 'binned_maf'  # 'binned_maf_info'
-# rQ = 1000
-# bS = 0.01
-# compute = False
+x_data = 'binned_maf'
 
 # Configure data/plots paths
 
@@ -98,8 +113,8 @@ axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (0.0, 1.0),
-    'cross_entropy': (0.0, 12.0)
+    'concordance': (0.0, 1.0),  # (0.0, 1.0),
+    'cross_entropy': (0.0, 12.0)  # (0.0, 12.0)
 }
 
 
@@ -125,8 +140,8 @@ def rollquants(dX: pd.DataFrame, dS1: pd.Series, dS2: pd.Series) -> pd.DataFrame
 
 # Load data and check
 
-q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos')
-q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos')
+q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos', mask=gbool)
+q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos', mask=gbool)
 
 print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.trueobj.variants),
                                                             len(q1gt.trueobj.samples),
@@ -137,8 +152,8 @@ print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.imputedobj.
 if compute:
     bgldiff = q1gt.diff()
 
-q2gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos')
-q2gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos')
+q2gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos', mask=gbool)
+q2gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos', mask=gbool)
 
 print('\r\n{} variants from {} samples read from {}'.format(len(q1gl.trueobj.variants),
                                                             len(q1gl.trueobj.samples),
@@ -187,6 +202,7 @@ for dquant, f in dataquants.items():
     if f is not None:
         dataf = pd.read_json(f, orient='records')
         print(dataf)
+        print(dataf[0.330 >= dataf['binned_maf']][dataf['binned_maf'] >= 0.315])
         meanf = {}
 
         gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
@@ -213,6 +229,9 @@ for dquant, f in dataquants.items():
                                                                             else 'main'),
                       fontsize=axlabsz)
         gY.set_ylabel(str.capitalize(dataf.columns[2].replace('_', ' ')), fontsize=axlabsz)
+        if gbool is not None:
+            gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
+            i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
 
         gY.set(ylim=yscale[dquant])
         # if dquant == 'cross_entropy':

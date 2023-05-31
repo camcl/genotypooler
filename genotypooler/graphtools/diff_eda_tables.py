@@ -49,6 +49,8 @@ parser = argparse.ArgumentParser(description='Exploratory Data Analysis with plo
 parser.add_argument('truegenos', metavar='trueg', type=str, help='File with true genotypes GT', default=None)
 parser.add_argument('othergenos', metavar='otherg', type=str, help='File with other genotypes GT or GL', default=None)
 parser.add_argument('outdir', metavar='outdir', type=str, help='Directory to save the plots', default=None)
+parser.add_argument('mask', metavar='mask', type=str, help='File with filtered data (GP format)', default=None)
+parser.add_argument('changed', metavar='chg', type=int, help='If True, mask unchanged priors', default=None)
 argsin = parser.parse_args()
 
 af_data = 'maf'
@@ -57,6 +59,22 @@ paths = {
     'true': argsin.truegenos,
     'other': argsin.othergenos
 }
+
+fmask = argsin.mask
+changed = argsin.changed
+
+# Create gbool mask for data
+
+if fmask != '.':
+    dfobj = vcfdf.PandasMixedVCF(fmask, format='GP', indextype='chrom:pos', mask=None)
+    gdata = dfobj.genotypes()
+    if changed:
+        gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> changed priors only
+    else:
+        gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> unchanged priors only
+    print('Number of visible values = ', gbool.sum())
+else:
+    gbool = None
 
 outdir = argsin.outdir  # '/home/camille/MagicWheat/src/genotypooler/examples/results/beagle-no-map'
 if not os.path.exists(outdir):
@@ -96,10 +114,10 @@ try:
 except:
     dftrue = vcfdf.PandasMixedVCF(paths['true'], format='GL')
 try:
-    dfother = vcfdf.PandasMixedVCF(paths['other'], format='GT')
+    dfother = vcfdf.PandasMixedVCF(paths['other'], format='GT', mask=~gbool)
     print(dfother.genotypes().head())
 except:
-    dfother = vcfdf.PandasMixedVCF(paths['other'], format='GL')
+    dfother = vcfdf.PandasMixedVCF(paths['other'], format='GL', mask=~gbool)
     print(dfother.genotypes().head())
 
 if af_data == 'aaf':
@@ -115,8 +133,8 @@ if af_data == 'aaf':
     )
 
 if af_data == 'maf':
-    df0 = dftrue.concatcols([dftrue.aaf, dftrue.maf.rename(columns={'maf': 'true_af'}), dftrue.missing_rate, dftrue.het_rate, dftrue.maf])
-    df3 = dfother.concatcols([dfother.aaf, dfother.maf, dfother.missing_rate, dfother.het_rate, dfother.hom_alt_rate, dfother.hom_ref_rate])
+    df0 = dftrue.concatcols([dftrue.aaf, dftrue.missing_rate, dftrue.het_rate, dftrue.maf])  # dftrue.maf.rename(columns={'maf': 'true_af'}),
+    df3 = dfother.concatcols([dfother.hom_alt_rate, dfother.hom_ref_rate])
 
 print('\nTrue data:')
 print(df0.head(10))
@@ -124,25 +142,20 @@ if df3 is not None:
     print('\nOther data:')
     print(df3.head(10))
 
-print('\r\nOverall missing rates:')
-tottruemiss = dftrue.missing_rate.mean() * 100
-totothermiss = dfother.missing_rate.mean() * 100
-print('True: ', tottruemiss)
-print('Other: ', totothermiss)
 
-# Basic statistics for LD and HD data sets per bin
+# Basic statistics for true and masked data sets per bin
 
-# Markers counts
+# Genotype counts (variants x samples) in true data
 
 cnts = dict([(lab, 0) for lab in lab_fmt])  # lab_bins
-hdbin = pd.cut(dftrue.maf.values.squeeze(), x_bins, labels=lab_fmt, include_lowest=True)  # lab_bins
-cnts.update(Counter(hdbin.dropna()))
-hdcnts = cnts
+mafbin = pd.cut(dftrue.maf.values.squeeze(), x_bins, labels=lab_fmt, include_lowest=True)  # lab_bins
+cnts.update(Counter(mafbin.dropna()))
+cnts = dict([(k, v * dftrue.genotypes().shape[1]) for k, v in cnts.items()])
 
-# Table with counts
-dfbincnts = pd.DataFrame.from_records([hdcnts])
+# Table with true counts
+dfbincnts = pd.DataFrame.from_records([cnts])
 dfbincnts.index = ['true']
-dfbincnts['Total'] = dfbincnts.sum(axis=1)
+dfbincnts['Total'] = dftrue.genotypes().size  # .sum(axis=1)
 dfbincnts.to_latex(buf=os.path.join(outdir, 'markers-bin-counts.tex'),
                    sparsify=True,
                    multirow=True,
@@ -152,8 +165,10 @@ dfbincnts.to_json(os.path.join(outdir, 'markers-bin-counts.json'),
                   orient='columns',
                   index=True
                   )
+print('\n')
+print(dfbincnts)
 
-# Table with proportions
+# Table with proportions (with respect to tot number and to the bin itself?)
 dfbinprop = dfbincnts / dfbincnts['Total'][-1]
 dfbinprop.to_latex(buf=os.path.join(outdir, 'markers-bin-prop.tex'),
                    sparsify=True,
@@ -166,55 +181,40 @@ dfbinprop.to_json(os.path.join(outdir, 'markers-bin-prop.json'),
                   index=True
                   )
 
-# Assign variants to bins
+# Counts of visible genotypes (variants x samples) in masked data
+truebin = pd.cut(df0.maf.values.squeeze(), x_bins, labels=lab_fmt, include_lowest=True)
+df0['MAF-bin'] = truebin
+df3['MAF-bin'] = truebin  # this assumes that the variants are the same in both data sets and sorted in the same order
 
-truebin = pd.cut(df0.true_af.values.squeeze(), x_bins, labels=lab_fmt, include_lowest=True)
-df0['AF-bin'] = truebin
-df3['AF-bin'] = truebin  # this assumes that the variants are the same in both data sets and sorted in the same order
+macnts = dfother.genotypes().count(axis=1)
+macnts.index.name = 'variants'
+macnts.name = 'counts'
+otherma = df3['MAF-bin'].to_frame()\
+    .join(macnts, how='left')\
+    .groupby(['MAF-bin'])['counts']\
+    .sum()\
+    .to_frame()\
+    .transpose()
+otherma.columns = otherma.columns.astype(str)
+otherma['Total'] = otherma.loc['counts'].sum()
 
-# Missing counts
+# Proportion of visible genotypes (variants x samples) in masked data w.r.t. the counts of genotypes per bin
+maprops = otherma.divide(dfbincnts.values)\
+    .round(decimals=3)\
+    .rename({'counts': 'proportions'})
 
-truemiss = df0.groupby(['AF-bin'])['missing_rate'].mean().to_frame() * 100  # display as percentage
-othermiss = df3.groupby(['AF-bin'])['missing_rate'].mean().to_frame() * 100
+otherma = pd.concat([otherma, maprops], axis=0)
+print('\n')
+print(otherma)
 
-binmiss = truemiss.join(othermiss, how='left', lsuffix='_true', rsuffix='_other').transpose()
-binmiss.columns = binmiss.columns.to_list()
-binmiss['Total'] = np.concatenate([tottruemiss.values, totothermiss.values])
-binmiss.index = ['true', 'other']
-print('\r\nMissing rate per bin:')
-print(binmiss)
-
-binmiss.to_latex(buf=os.path.join(outdir, 'missing-other-bin.tex'),
+otherma.to_latex(buf=os.path.join(outdir, 'unmasked-genotypes-bin.tex'),
                  sparsify=True,
                  multirow=True,
                  float_format="%.3f",
-                 caption='Proportion of missing genotypes per {} bin'.format('MAF' if af_data == 'maf' else 'AAF'),
-                 label='tab:missing-other-bin')
-binmiss.to_json(os.path.join(outdir, 'missing-other-bin.json'),
+                 caption='Counts and proportions of unmasked genotypes per {} bin'.format('MAF' if af_data == 'maf' else 'AAF'),
+                 label='tab:unmasked-genotypes-bin')
+otherma.to_json(os.path.join(outdir, 'unmasked-genotypes-bin.json'),
                 orient='columns',
                 index=True
                 )
 
-
-# Heterozygote counts
-
-truehet = df0.groupby(['AF-bin'])['het_rate'].mean().to_frame() * 100
-otherhet = df3.groupby(['AF-bin'])['het_rate'].mean().to_frame() * 100
-
-binhet = truemiss.join(otherhet, how='left', lsuffix='_true', rsuffix='_other').transpose()
-binhet.columns = binhet.columns.to_list()
-binhet['Total'] = np.concatenate([truehet.sum().values, otherhet.sum().values])
-binhet.index = ['true', 'other']
-print('\r\nHeterozygosity rate per bin:')
-print(binhet)
-
-binhet.to_latex(buf=os.path.join(outdir, 'het-other-bin.tex'),
-                sparsify=True,
-                multirow=True,
-                float_format="%.3f",
-                caption='Proportion of heterozygous genotypes per {} bin'.format('MAF' if af_data == 'maf' else 'AAF'),
-                label='tab:het-other-bin')
-binhet.to_json(os.path.join(outdir, 'het-other-bin.json'),
-               orient='columns',
-               index=True
-               )

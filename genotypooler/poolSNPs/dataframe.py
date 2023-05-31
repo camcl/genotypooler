@@ -22,7 +22,7 @@ class PandasMixedVCF(object):
     Implements pysam methods into Pandas structures.
     Drawback: extremely slow...
     """
-    def __init__(self, vcfpath: FilePath, format: str = None, indextype: str = 'id'):
+    def __init__(self, vcfpath: FilePath, format: str = None, indextype: str = 'id', mask: np.ndarray = None):
         """
         :param vcfpath:
         :param indextype: identifier for variants: 'id', 'chrom:pos'.
@@ -31,6 +31,7 @@ class PandasMixedVCF(object):
         self.path = vcfpath
         self.fmt = format
         self.idx = indextype
+        self.mask = mask
         obj = pysam.VariantFile(self.path)
         self.samples = list(obj.header.samples)
 
@@ -130,13 +131,16 @@ class PandasMixedVCF(object):
        """
         lines = chkvcf.PysamVariantCallGenerator(self.path, format=self.fmt)
         df = pd.DataFrame(lines, index=self.variants.rename('id'), columns=self.samples)
-
+        if self.mask is not None:
+            df = pd.DataFrame(np.ma.array(df.values, mask=self.mask),
+                              index=self.variants.rename('id'), columns=self.samples)
         return df
 
     def trinary_encoding(self) -> pd.DataFrame:
         vcfobj = self.load()
         vars = self.variants
         arr = np.empty((len(vars), len(self.samples)), dtype=float)
+
         if self.fmt.upper() == 'GT':
             missing = np.vectorize(lambda x: np.nan if x is None else x)
             for i, var in enumerate(vcfobj):
@@ -166,8 +170,12 @@ class PandasMixedVCF(object):
                 gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
-        dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
 
+        if self.mask is None:
+            dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
+        else:
+            dftrinary = pd.DataFrame(np.ma.array(arr, mask=self.mask),
+                                     index=vars, columns=self.samples, dtype=int)
         return dftrinary
 
     def gl_to_hexa_gt(self, x: np.ndarray) -> np.ndarray:
@@ -232,7 +240,12 @@ class PandasMixedVCF(object):
                 gts = np.array([g[self.fmt] for g in var.samples.values()]).astype(float)
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
-        dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
+
+        if self.mask is None:
+            dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
+        else:
+            dfhexa = pd.DataFrame(np.ma.array(arr, mask=self.mask),
+                                  index=vars, columns=self.samples, dtype=float)
 
         return dfhexa
 

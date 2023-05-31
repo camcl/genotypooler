@@ -38,6 +38,7 @@ rootdir = os.path.dirname(os.path.dirname(os.getcwd()))
 sys.path.insert(0, rootdir)
 
 from genotypooler.poolSNPs.metrics import quality as qual
+from genotypooler.poolSNPs import dataframe as vcfdf
 from genotypooler.persotools.files import *
 
 
@@ -54,7 +55,8 @@ parser.add_argument('date', metavar='date', type=str, help='Date of the experime
 parser.add_argument('rollwin', metavar='wq', type=int, help='Number of markers per rolling window', default=1000)  # default option does not work
 parser.add_argument('bins', metavar='bin', type=float, help='Bin size for discretizing MAF', default=0.01)  # default option does not work
 parser.add_argument('compute', metavar='comp', type=int, help='If True, compute quantiles and plots, else runs plotting only', default=1)
-
+parser.add_argument('mask', metavar='mask', type=str, help='File with filtered data (GP format)', default=None)
+parser.add_argument('changed', metavar='chg', type=int, help='If True, mask unchanged priors', default=None)
 
 argsin = parser.parse_args()
 print('\n'.ljust(80, '*'))
@@ -71,6 +73,23 @@ datedir = argsin.date
 rQ = argsin.rollwin * 4  # try some integers in the range [2, 5] and see what is the smoothest
 bS = argsin.bins
 compute = argsin.compute
+fmask = argsin.mask
+changed = argsin.changed
+
+# Create gbool mask for data
+
+# parent_dir = "/home/camille/IterDecodeImpute/runs/poolimputeSNPs/results/data/1/"
+# vcf_changes = parent_dir + "cycle6/STU.Chr1.SNPs.pruned.sorted.pooled.changed_priors.vcf"
+if fmask != '.':
+    dfobj = vcfdf.PandasMixedVCF(fmask, format='GP', indextype='chrom:pos', mask=None)
+    gdata = dfobj.genotypes()
+    if changed:
+        gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> changed priors only
+    else:
+        gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> unchanged priors only
+    print('Number of visible values = ', gbool.sum())
+else:
+    gbool = None
 
 # Data parameters
 
@@ -126,8 +145,8 @@ def diff_rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame: # , dS2: 
 
 # Load data and check
 
-q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos')
-q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos')
+q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos', mask=gbool)
+q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos', mask=gbool)
 
 print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.trueobj.variants),
                                                             len(q1gt.trueobj.samples),
@@ -138,8 +157,8 @@ print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.imputedobj.
 if compute:
     bgldiff = q1gt.diff()
 
-q2gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos')
-q2gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos')
+q2gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos', mask=gbool)
+q2gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos', mask=gbool)
 
 print('\r\n{} variants from {} samples read from {}'.format(len(q1gl.trueobj.variants),
                                                             len(q1gl.trueobj.samples),
@@ -216,10 +235,10 @@ if True:
                                                                                 else 'main'),
                           fontsize=axlabsz)
             gY.set_ylabel(str.capitalize(dataf.columns[2].replace('_', ' ')), fontsize=axlabsz)
+            if gbool is not None:
+                gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
+                i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
 
-            # gY.set(ylim=yscale[dquant])
-            # if dquant == 'cross_entropy':
-            #     gY.set(yscale="log")
             handles, labels = gY.get_legend_handles_labels()
             # labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['1'])
             labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['cycleX - cycleX+1'])

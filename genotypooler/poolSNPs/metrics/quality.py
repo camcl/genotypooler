@@ -66,9 +66,11 @@ class QualityGT(object):
     * difference per variant and/or per sample between imputed and true genotypes
     * allele dosage
     """
-    def __init__(self, truefile: FilePath, imputedfile: FilePath, ax: object, idx: str = 'id'):
-        self.trueobj = vcfdf.PandasMixedVCF(truefile, format='GT', indextype=idx)
-        self.imputedobj = vcfdf.PandasMixedVCF(imputedfile, format='GT', indextype=idx)
+    def __init__(self, truefile: FilePath, imputedfile: FilePath, ax: object, idx: str = 'id',
+                 mask: np.ma.MaskedArray = None
+                 ):
+        self.trueobj = vcfdf.PandasMixedVCF(truefile, format='GT', indextype=idx, mask=mask)
+        self.imputedobj = vcfdf.PandasMixedVCF(imputedfile, format='GT', indextype=idx, mask=mask)
         self._axis = ax
 
     @property
@@ -294,9 +296,10 @@ class QualityGL(object):
     Implement cross-entropy method for assessing imputation performance from GL.
     Numba-enhanced calculations.
     """
-    def __init__(self, truefile: FilePath, imputedfile: FilePath, ax: object, fmt: str = 'GP', idx: str = 'id'):
-        self.trueobj = vcfdf.PandasMixedVCF(truefile, format='GL', indextype=idx)
-        self.imputedobj = vcfdf.PandasMixedVCF(imputedfile, format=fmt, indextype=idx)
+    def __init__(self, truefile: FilePath, imputedfile: FilePath, ax: object, fmt: str = 'GP', idx: str = 'id',
+                 mask: np.ma.MaskedArray = None):
+        self.trueobj = vcfdf.PandasMixedVCF(truefile, format='GL', indextype=idx, mask=mask)
+        self.imputedobj = vcfdf.PandasMixedVCF(imputedfile, format=fmt, indextype=idx, mask=mask)
         self._axis = ax
 
     @property
@@ -319,8 +322,8 @@ class QualityGL(object):
         p_imputed set to 10^-12 if equal to 0.0
         Usual logarithm log, NOT log10 for entropy calculation
         """
-        g_true = pd.Series(g_true)
-        g_pred = pd.Series(g_pred)  # comes as tuples of str
+        g_true = pd.Series(g_true).map(lambda x: (np.nan, np.nan, np.nan) if np.isnan(x).all() else x)
+        g_pred = pd.Series(g_pred).map(lambda x: (np.nan, np.nan, np.nan) if np.isnan(x).all() else x)  # comes as tuples of float
 
         # pandas.DataFrame.combine: both data frames must have the SAME column names
         dftrue = pd.DataFrame.from_records(g_true.values,
