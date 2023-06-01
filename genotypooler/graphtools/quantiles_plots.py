@@ -113,8 +113,8 @@ axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (0.0, 1.0),  # (0.0, 1.0),
-    'cross_entropy': (0.0, 12.0)  # (0.0, 12.0)
+    'concordance': (0.85, 1.0),  # no zoom-in: (0.0, 1.0),
+    'cross_entropy': (0.0, 1.0)  # no zoom-in: (0.0, 12.0)
 }
 
 
@@ -125,13 +125,13 @@ def rollquants(dX: pd.DataFrame, dS1: pd.Series, dS2: pd.Series) -> pd.DataFrame
                                    dS1,
                                    bins_step=bS)
     pctY1 = pdf1.binnedX_rolling_quantilY(rollwin=rQ)
-    pctY1['dataset'] = ['1'] * pctY1.shape[0]
+    pctY1['dataset'] = ['N'] * pctY1.shape[0]
 
     pdf2 = qual.QuantilesDataFrame(dX,
                                    dS2,
                                    bins_step=bS)
     pctY2 = pdf2.binnedX_rolling_quantilY(rollwin=rQ)
-    pctY2['dataset'] = ['2'] * pctY2.shape[0]
+    pctY2['dataset'] = ['N+1'] * pctY2.shape[0]
 
     rollquants = pd.concat([pctY1, pctY2])
 
@@ -166,10 +166,10 @@ mafS = q1gt.trueobj.maf
 
 if compute:
     metrics = {
-        'concordance': {'1': q1gt.concordance(),
-                        '2': q2gt.concordance()},
-        'cross_entropy': {'1': q1gl.cross_entropy,
-                          '2': q2gl.cross_entropy}
+        'concordance': {'N': q1gt.concordance(),
+                        'N+1': q2gt.concordance()},
+        'cross_entropy': {'N': q1gl.cross_entropy,
+                          'N+1': q2gl.cross_entropy}
     }
 
 dataquants = {
@@ -188,7 +188,7 @@ if compute:
             pctY_comp = rollquants(mafS, yS_1, yS_2)
             # Compute mean over all markers
             print('Computing means for {}'.format(metric).ljust(80, '.'))
-            pctY_comp['mean'] = pctY_comp['dataset'].apply(lambda x: yS_1.mean() if x == '1' else yS_2.mean())
+            pctY_comp['mean'] = pctY_comp['dataset'].apply(lambda x: yS_1.mean() if x == 'N' else yS_2.mean())
             jsonf = dataquants[metric]
             pctY_comp.to_json(jsonf,
                               orient='records')
@@ -207,8 +207,8 @@ for dquant, f in dataquants.items():
 
         gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
                           hue='dataset', palette="deep", linewidth=1)
-        for i, dset in enumerate(['1', '2']):
-            df = dataf[dataf['dataset'] == int(dset)]
+        for i, dset in enumerate(['N', 'N+1']):
+            df = dataf[dataf['dataset'] == dset]
             meanf[dset] = df['mean'].mean()
             gY.fill_between(df[df.quantiles == 1.0][x_data],
                             df[df.quantiles == 0.0][dquant],
@@ -237,8 +237,8 @@ for dquant, f in dataquants.items():
         # if dquant == 'cross_entropy':
         #     gY.set(yscale="log")
         handles, labels = gY.get_legend_handles_labels()
-        labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['1'])
-        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['2'])
+        labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['N'])
+        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['N+1'])
         gY.legend(handles, labels, loc='lower right' if dquant == 'concordance' else 'upper right', fontsize=legsz)
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, '{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))

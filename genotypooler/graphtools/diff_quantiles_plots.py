@@ -1,8 +1,8 @@
 """
 Plots comparing the accuracy of imputation between consecutive runs.
 The following metrics are computed across MAF range and shown with quantiles [25%, 50%, 75%] dispersion.
-* Concordance: marker-wise difference cycleX - cycleX+1
-* Cross-entropy: marker-wise difference cycleX - cycleX+1
+* Concordance: marker-wise difference cycleN - cycleN+1
+* Cross-entropy: marker-wise difference cycleN - cycleN+1
 
 Quantiles computed on rolling windows.
 
@@ -93,10 +93,7 @@ else:
 
 # Data parameters
 
-x_data = 'binned_maf'  # 'binned_maf_info'
-# rQ = 1000
-# bS = 0.01
-# compute = False
+x_data = 'binned_maf'
 
 # Configure data/plots paths
 
@@ -110,15 +107,15 @@ print('\r\nData written to {}'.format(outdir))
 # Plot styling
 
 # Specific to this plotting script
-sns.set(rc={'figure.figsize': (10, 8)})  # specific to this plotting sripts
+sns.set(rc={'figure.figsize': (10, 8)})
 sns.set_style('whitegrid')
 titlesz = 24
 axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (0.0, 1.0),
-    'cross_entropy': (0.0, 12.0)
+    'concordance': (-0.05, 0.01),
+    'cross_entropy': (-0.15, 0.45)
 }
 
 
@@ -129,7 +126,7 @@ def diff_rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame: # , dS2: 
                                    dS1,
                                    bins_step=bS)
     pctY1 = pdf1.binnedX_rolling_quantilY(rollwin=rQ)
-    pctY1['dataset'] = ['cycleX - cycleX+1'] * pctY1.shape[0]
+    pctY1['dataset'] = ['cycleN - cycleN+1'] * pctY1.shape[0]
     diff_rollquants = pctY1
 
     # pdf2 = qual.QuantilesDataFrame(dX,
@@ -213,7 +210,7 @@ if True:
 
             gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
                               hue='dataset', palette="husl", linewidth=1)
-            for i, dset in enumerate(['cycleX - cycleX+1']):
+            for i, dset in enumerate(['cycleN - cycleN+1']):
                 df = dataf[dataf['dataset'] == dset]
                 meanf[dset] = df['mean'].mean()
                 gY.fill_between(df[df.quantiles == 1.0][x_data],
@@ -235,13 +232,14 @@ if True:
                                                                                 else 'main'),
                           fontsize=axlabsz)
             gY.set_ylabel(str.capitalize(dataf.columns[2].replace('_', ' ')), fontsize=axlabsz)
+            gY.set(ylim=yscale[dquant])
             if gbool is not None:
                 gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
                 i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
 
             handles, labels = gY.get_legend_handles_labels()
             # labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['1'])
-            labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['cycleX - cycleX+1'])
+            labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['cycleN - cycleN+1'])
             gY.legend(handles, labels, loc='lower right' if dquant == 'concordance' else 'upper right', fontsize=legsz)
             plt.tight_layout()
             plt.savefig(os.path.join(outdir, 'diff_{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))
