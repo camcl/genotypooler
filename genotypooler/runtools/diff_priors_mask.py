@@ -57,10 +57,11 @@ class VariantRecordDiff(object):
 
     def _diff_prior_null(self, prior1: np.ndarray, prior2: np.ndarray) -> bool:
         """Test whether two priors represented as GL(RR, RA, AA) are equal"""
-        if np.equal(prior1, prior2).all():
-            return True
-        else:
-            return False
+        # if np.equal(prior1, prior2).all():
+        #     return True
+        # else:
+        #     return False
+        return np.allclose(prior1, prior2, rtol=0.0, atol=1e-05)
 
     def new_var(self, var1, var2, changed) -> str:
         """
