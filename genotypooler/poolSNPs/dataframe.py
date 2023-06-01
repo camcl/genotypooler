@@ -124,19 +124,19 @@ class PandasMixedVCF(object):
 
         return df0, df1
 
-    def genotypes(self) -> pd.DataFrame:
+    def genotypes(self, use_mask=True) -> pd.DataFrame:
         """
        Throws the formatted genotypes values of a VCF file into a DataFrame.
        :return: DataFrame
        """
         lines = chkvcf.PysamVariantCallGenerator(self.path, format=self.fmt)
         df = pd.DataFrame(lines, index=self.variants.rename('id'), columns=self.samples)
-        if self.mask is not None:
+        if (self.mask is not None and use_mask):
             df = pd.DataFrame(np.ma.array(df.values, mask=self.mask),
                               index=self.variants.rename('id'), columns=self.samples)
         return df
 
-    def trinary_encoding(self) -> pd.DataFrame:
+    def trinary_encoding(self, use_mask=True) -> pd.DataFrame:
         vcfobj = self.load()
         vars = self.variants
         arr = np.empty((len(vars), len(self.samples)), dtype=float)
@@ -171,7 +171,7 @@ class PandasMixedVCF(object):
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
 
-        if self.mask is None:
+        if (self.mask is None or not use_mask):
             dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
         else:
             dftrinary = pd.DataFrame(np.ma.array(arr, mask=self.mask),
@@ -206,7 +206,7 @@ class PandasMixedVCF(object):
         else:
             return gtnan
 
-    def hexa_encoding(self) -> pd.DataFrame:
+    def hexa_encoding(self, use_mask=True) -> pd.DataFrame:
         """
         Encode the GT genotypes as follows:
             * 0, 0 -> 0.0
@@ -241,7 +241,7 @@ class PandasMixedVCF(object):
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
 
-        if self.mask is None:
+        if (self.mask is None or not use_mask):
             dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
         else:
             dfhexa = pd.DataFrame(np.ma.array(arr, mask=self.mask),
@@ -260,7 +260,7 @@ class PandasMixedVCF(object):
 
     @property
     def aaf(self):
-        trico = self.trinary_encoding()
+        trico = self.trinary_encoding(use_mask=False)  # never use a mask for computing MAF or AAF
         trico[trico == -1] = np.nan
         # calculate alternate allele frequency from non-missing genotypes
         func = lambda x: np.nansum(x) / (2 * np.sum(~np.isnan(x)))
