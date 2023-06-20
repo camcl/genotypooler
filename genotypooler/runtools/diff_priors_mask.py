@@ -24,7 +24,7 @@ from genotypooler.poolSNPs import dataframe as vcfdf
 from genotypooler.poolSNPs import pybcf
 
 changes = True  # False --> unchanged priors (not working?)
-prev_cycle = 1
+prev_cycle = 41
 parent_dir = "/home/camille/IterDecodeImpute/runs/poolimputeSNPs/results/data/1/"
 vcf1 = parent_dir + f"cycle{prev_cycle}/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz"  # (log) GL
 vcf2 = parent_dir + f"cycle{prev_cycle + 1}/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz"  # (log) GL

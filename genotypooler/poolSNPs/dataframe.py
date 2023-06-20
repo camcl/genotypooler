@@ -131,9 +131,10 @@ class PandasMixedVCF(object):
        """
         lines = chkvcf.PysamVariantCallGenerator(self.path, format=self.fmt)
         df = pd.DataFrame(lines, index=self.variants.rename('id'), columns=self.samples)
-        if (self.mask is not None and use_mask):
-            df = pd.DataFrame(np.ma.array(df.values, mask=self.mask),
-                              index=self.variants.rename('id'), columns=self.samples)
+        if self.mask is not None and use_mask:
+            df.mask(self.mask, inplace=True)
+            # df = pd.DataFrame(np.ma.array(df.values, mask=self.mask),
+            #                   index=self.variants.rename('id'), columns=self.samples)
         return df
 
     def trinary_encoding(self, use_mask=True) -> pd.DataFrame:
@@ -171,11 +172,10 @@ class PandasMixedVCF(object):
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
 
-        if (self.mask is None or not use_mask):
-            dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
-        else:
-            dftrinary = pd.DataFrame(np.ma.array(arr, mask=self.mask),
-                                     index=vars, columns=self.samples, dtype=int)
+        dftrinary = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=int)
+        if self.mask is not None and use_mask:
+            dftrinary.mask(self.mask, inplace=True)
+
         return dftrinary
 
     def gl_to_hexa_gt(self, x: np.ndarray) -> np.ndarray:
@@ -241,11 +241,9 @@ class PandasMixedVCF(object):
                 tri = np.apply_along_axis(missing, -1, gts).sum(axis=-1)
                 arr[i, :] = np.nan_to_num(tri, nan=-1)
 
-        if (self.mask is None or not use_mask):
-            dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
-        else:
-            dfhexa = pd.DataFrame(np.ma.array(arr, mask=self.mask),
-                                  index=vars, columns=self.samples, dtype=float)
+        dfhexa = pd.DataFrame(arr, index=vars, columns=self.samples, dtype=float)
+        if self.mask is not None and use_mask:
+            dfhexa.mask(self.mask, inplace=True)
 
         return dfhexa
 

@@ -69,9 +69,9 @@ if fmask != '.':
     dfobj = vcfdf.PandasMixedVCF(fmask, format='GP', indextype='chrom:pos', mask=None)
     gdata = dfobj.genotypes()
     if changed:
-        gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> changed priors only
+        gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> changed priors only
     else:
-        gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> unchanged priors only
+        gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> unchanged priors only
     print('Number of visible values = ', gbool.sum())
 else:
     gbool = None

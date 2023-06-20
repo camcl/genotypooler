@@ -121,21 +121,13 @@ yscale = {
 
 # Function/Tools
 
-def diff_rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame: # , dS2: pd.Series
+def diff_rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame:
     pdf1 = qual.QuantilesDataFrame(dX,
                                    dS1,
                                    bins_step=bS)
     pctY1 = pdf1.binnedX_rolling_quantilY(rollwin=rQ)
     pctY1['dataset'] = ['cycleN - cycleN+1'] * pctY1.shape[0]
     diff_rollquants = pctY1
-
-    # pdf2 = qual.QuantilesDataFrame(dX,
-    #                                dS2,
-    #                                bins_step=bS)
-    # pctY2 = pdf2.binnedX_rolling_quantilY(rollwin=rQ)
-    # pctY2['dataset'] = ['2'] * pctY2.shape[0]
-    #
-    # diff_rollquants = pd.concat([pctY1, pctY2])
 
     return diff_rollquants
 
@@ -144,6 +136,9 @@ def diff_rollquants(dX: pd.DataFrame, dS1: pd.Series) -> pd.DataFrame: # , dS2: 
 
 q1gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos', mask=gbool)
 q1gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos', mask=gbool)
+if fmask != '.' and changed:  # parse the complementary data i.e. mask changed priors
+    q12gt = qual.QualityGT(truegt, imputed_1, 0, idx='chrom:pos', mask=~gbool)
+    q12gl = qual.QualityGL(truegl, imputed_1, 0, idx='chrom:pos', mask=~gbool)
 
 print('\r\n{} variants from {} samples read from {}'.format(len(q1gt.trueobj.variants),
                                                             len(q1gt.trueobj.samples),
@@ -156,9 +151,12 @@ if compute:
 
 q2gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos', mask=gbool)
 q2gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos', mask=gbool)
+if fmask != '.' and changed:  # parse the complementary data i.e. mask changed priors
+    q22gt = qual.QualityGT(truegt, imputed_2, 0, idx='chrom:pos', mask=~gbool)
+    q22gl = qual.QualityGL(truegl, imputed_2, 0, idx='chrom:pos', mask=~gbool)
 
-print('\r\n{} variants from {} samples read from {}'.format(len(q1gl.trueobj.variants),
-                                                            len(q1gl.trueobj.samples),
+print('\r\n{} variants from {} samples read from {}'.format(len(q2gt.trueobj.variants),
+                                                            len(q2gt.trueobj.samples),
                                                             os.path.basename(truegl)))
 print('\r\n{} variants from {} samples read from {}'.format(len(q2gl.imputedobj.variants),
                                                             len(q2gl.imputedobj.samples),
@@ -173,11 +171,23 @@ if compute:
         'cross_entropy': {'1': q1gl.marker_wise_cross_entropy,
                           '2': q2gl.marker_wise_cross_entropy}
     }
+    if fmask != '.' and changed:  # parse the complementary data i.e. mask changed priors
+        antimetrics = {
+            'concordance': {'1': q12gt.marker_wise_concordance(),
+                            '2': q22gt.marker_wise_concordance()},
+            'cross_entropy': {'1': q12gl.marker_wise_cross_entropy,
+                              '2': q22gl.marker_wise_cross_entropy}
+        }
 
 dataquants = {
     'concordance': os.path.join(outdir, 'diff_rolling_quantiles_concordance.json'),
     'cross_entropy': os.path.join(outdir, 'diff_rolling_quantiles_cross_entropy.json')
 }
+if fmask != '.' and changed:
+    antidataq = {
+        'concordance': None,
+        'cross_entropy': None
+    }
 
 # Process and write data
 
@@ -197,51 +207,72 @@ if compute:
             jsonf = dataquants[metric]
             pctY_comp.to_json(jsonf,
                               orient='records')
-if True:
-    # Read processed reshaped data for plotting and draw figures
 
-    sns.set(font_scale=1.75)  # multiplication factor!
+    if fmask != '.' and changed:  # parse the complementary data i.e. mask changed priors
+        for metric, d in antimetrics.items():
+            if d is not None:
+                zDF_1, zDF_2 = list(d.values())
+                zS1_2 = zDF_1.subtract(zDF_2).mean(axis=1).rename(metric)
+                # Compute quantiles
+                print('Computing quantiles for {} in complementary data'.format(metric).ljust(80, '.'))
+                pctZ_comp = diff_rollquants(mafS, zS1_2)
+                # Compute mean over all markers
+                print('Computing means for {} in complementary data'.format(metric).ljust(80, '.'))
+                pctZ_comp['mean'] = pctZ_comp['dataset'].apply(lambda x: zS1_2.mean())
+                antidataq[metric] = pctZ_comp
 
-    for dquant, f in dataquants.items():
-        if f is not None:
-            dataf = pd.read_json(f, orient='records')
-            print(dataf)
-            meanf = {}
+# Read processed reshaped data for plotting and draw figures
 
-            gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
-                              hue='dataset', palette="husl", linewidth=1)
-            for i, dset in enumerate(['cycleN - cycleN+1']):
-                df = dataf[dataf['dataset'] == dset]
-                meanf[dset] = df['mean'].mean()
-                gY.fill_between(df[df.quantiles == 1.0][x_data],
-                                df[df.quantiles == 0.0][dquant],
-                                df[df.quantiles == 1.0][dquant],
-                                color=sns.color_palette('husl')[i],
-                                alpha=0.1)
-                gY.fill_between(df[df.quantiles == 0.99][x_data],
-                                df[df.quantiles == 0.01][dquant],
-                                df[df.quantiles == 0.99][dquant],
-                                color=sns.color_palette('husl')[i],
-                                alpha=0.25)
-                gY.fill_between(df[df.quantiles == 0.75][x_data],
-                                df[df.quantiles == 0.25][dquant],
-                                df[df.quantiles == 0.75][dquant],
-                                color=sns.color_palette('husl')[i],
-                                alpha=0.40)
-            gY.set_xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
-                                                                                else 'main'),
-                          fontsize=axlabsz)
-            gY.set_ylabel(str.capitalize(dataf.columns[2].replace('_', ' ')), fontsize=axlabsz)
-            gY.set(ylim=yscale[dquant])
-            if gbool is not None:
-                gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
-                i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
+sns.set(font_scale=1.75)  # multiplication factor!
+sns_palette = "husl"  # Choose a palette with  fixed number of levels, or fix n_colors with husl
 
-            handles, labels = gY.get_legend_handles_labels()
-            # labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf['1'])
-            labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf['cycleN - cycleN+1'])
-            gY.legend(handles, labels, loc='lower right' if dquant == 'concordance' else 'upper right', fontsize=legsz)
-            plt.tight_layout()
-            plt.savefig(os.path.join(outdir, 'diff_{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))
-            # plt.show()
-            plt.close()
+for dquant, f in dataquants.items():
+    if f is not None:
+        dataf = pd.read_json(f, orient='records')
+        meanf = {}
+
+        if fmask != '.' and changed:
+            dataf['dataset'] = 'changed priors'
+            antidataf = antidataq[dquant]
+            antidataf['dataset'] = 'unchanged priors'
+            dataf = pd.concat([dataf, antidataf], axis=0).reset_index(drop=True)
+        print(dataf)
+
+        gY = sns.lineplot(data=dataf[dataf.quantiles == 0.5], x=x_data, y=dquant,
+                          hue='dataset', palette=sns.color_palette(sns_palette, n_colors=2), linewidth=1)
+        for i, dset in enumerate(np.unique(dataf['dataset'].values)):  # enumerate(['cycleN - cycleN+1']):
+            df = dataf[dataf['dataset'] == dset]
+            meanf[dset] = df['mean'].mean()
+            gY.fill_between(df[df.quantiles == 1.0][x_data],
+                            df[df.quantiles == 0.0][dquant],
+                            df[df.quantiles == 1.0][dquant],
+                            color=sns.color_palette(sns_palette, n_colors=2)[i],
+                            alpha=0.1)
+            gY.fill_between(df[df.quantiles == 0.99][x_data],
+                            df[df.quantiles == 0.01][dquant],
+                            df[df.quantiles == 0.99][dquant],
+                            color=sns.color_palette(sns_palette, n_colors=2)[i],
+                            alpha=0.25)
+            gY.fill_between(df[df.quantiles == 0.75][x_data],
+                            df[df.quantiles == 0.25][dquant],
+                            df[df.quantiles == 0.75][dquant],
+                            color=sns.color_palette(sns_palette, n_colors=2)[i],
+                            alpha=0.40)
+        gY.set_xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
+                                                                            else 'main'),
+                      fontsize=axlabsz)
+        gY.set_ylabel(f"Difference in {dataf.columns[2].replace('_', ' ')} (cycleN - cycleN+1)", fontsize=axlabsz)
+        gY.set(ylim=yscale[dquant])
+        if gbool is not None and not (fmask != '.' and changed):
+            gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
+            i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
+
+        handles, labels = gY.get_legend_handles_labels()
+        if fmask != '.' and changed:
+            labels[-2] = '{} (mean = {:.5f})'.format(labels[-2], meanf[np.unique(dataf['dataset'].values)[0]])
+        labels[-1] = '{} (mean = {:.5f})'.format(labels[-1], meanf[np.unique(dataf['dataset'].values)[-1]])  # meanf['cycleN - cycleN+1'])
+        gY.legend(handles, labels, loc='lower right' if dquant == 'concordance' else 'upper right', fontsize=legsz)
+        plt.tight_layout()
+        plt.savefig(os.path.join(outdir, 'diff_{}_percentiles_rQ={}_bS={}_xdata={}.pdf'.format(dquant, rQ, bS, x_data.lstrip('binned_'))))
+        # plt.show()
+        plt.close()
