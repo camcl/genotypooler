@@ -114,7 +114,7 @@ axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (-0.05, 0.01),
+    'concordance': (-0.20, 0.10),
     'cross_entropy': (-0.15, 0.45)
 }
 
@@ -263,9 +263,6 @@ for dquant, f in dataquants.items():
                       fontsize=axlabsz)
         gY.set_ylabel(f"Difference in {dataf.columns[2].replace('_', ' ')} (cycleN - cycleN+1)", fontsize=axlabsz)
         gY.set(ylim=yscale[dquant])
-        if gbool is not None and not (fmask != '.' and changed):
-            gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
-            i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
 
         handles, labels = gY.get_legend_handles_labels()
         if fmask != '.' and changed:

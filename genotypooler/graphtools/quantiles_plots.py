@@ -86,7 +86,7 @@ if fmask != '.':
         gbool = gdata.applymap(lambda x: True if x[0] is None else False).values  # gdata... && 'changed_priors' -> keep changed priors only
     else:
         gbool = ~gdata.applymap(lambda x: True if x[0] is None else False).values  # ~gdata... && 'changed_priors' -> keep unchanged priors only
-    print('Number of visible values = ', gbool.sum())
+    print('Number of visible values = ', (~gbool).sum())
 else:
     gbool = None
 
@@ -113,7 +113,7 @@ axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (0.85, 1.0),  # no zoom-in: (0.0, 1.0),
+    'concordance': (0.75, 1.0),  # no zoom-in: (0.0, 1.0),
     'cross_entropy': (0.0, 1.0)  # no zoom-in: (0.0, 12.0)
 }
 
@@ -231,8 +231,8 @@ for dquant, f in dataquants.items():
                       fontsize=axlabsz)
         gY.set_ylabel(str.capitalize(dataf.columns[2].replace('_', ' ')), fontsize=axlabsz)
         if gbool is not None:
-            gY.set_title(f'''Number of genotypes used (variants x samples) = {gbool.sum()} 
-            i.e. {gbool.sum() * 100 / gbool.size:2.1f}% of the dataset''', fontsize=16)
+            gY.set_title(f'''Number of genotypes used (variants x samples) = {(~gbool).sum()} 
+            i.e. {(~gbool).sum() * 100 / (~gbool).size:2.1f}% of the dataset''', fontsize=16)
 
         gY.set(ylim=yscale[dquant])
         handles, labels = gY.get_legend_handles_labels()
