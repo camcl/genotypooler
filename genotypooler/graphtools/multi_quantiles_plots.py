@@ -107,7 +107,7 @@ axlabsz= 20
 axticksz = 16
 legsz = 20
 yscale = {
-    'concordance': (0.8, 1.0),  # no zoom-in: (0.0, 1.0),
+    'concordance': (0.75, 1.0),  # no zoom-in: (0.0, 1.0),
     'cross_entropy': (0.0, 1.5)  # no zoom-in: (0.0, 12.0)
 }
 
@@ -203,21 +203,22 @@ for dquant, f in dataquants.items():
         for i, dset in enumerate(ncycles):
             df = dataf[dataf['dataset'] == int(dset)]
             meanf[dset] = df['mean'].mean()
-            gY.fill_between(df[df.quantiles == 1.0][x_data],
-                            df[df.quantiles == 0.0][dquant],
-                            df[df.quantiles == 1.0][dquant],
-                            color=sns.color_palette('colorblind')[i],
-                            alpha=0.1)
-            gY.fill_between(df[df.quantiles == 0.99][x_data],
-                            df[df.quantiles == 0.01][dquant],
-                            df[df.quantiles == 0.99][dquant],
-                            color=sns.color_palette('colorblind')[i],
-                            alpha=0.25)
-            gY.fill_between(df[df.quantiles == 0.75][x_data],
-                            df[df.quantiles == 0.25][dquant],
-                            df[df.quantiles == 0.75][dquant],
-                            color=sns.color_palette('colorblind')[i],
-                            alpha=0.40)
+            if i == 0 or i == len(ncycles) - 1:
+                gY.fill_between(df[df.quantiles == 1.0][x_data],
+                                df[df.quantiles == 0.0][dquant],
+                                df[df.quantiles == 1.0][dquant],
+                                color=sns.color_palette('colorblind')[i],
+                                alpha=0.05)
+                gY.fill_between(df[df.quantiles == 0.99][x_data],
+                                df[df.quantiles == 0.01][dquant],
+                                df[df.quantiles == 0.99][dquant],
+                                color=sns.color_palette('colorblind')[i],
+                                alpha=0.15)
+                gY.fill_between(df[df.quantiles == 0.75][x_data],
+                                df[df.quantiles == 0.25][dquant],
+                                df[df.quantiles == 0.75][dquant],
+                                color=sns.color_palette('colorblind')[i],
+                                alpha=0.25)
         gY.set_xlabel('True minor allele frequency in {} population'.format('study' if x_data == 'binned_maf'
                                                                             else 'main'),
                       fontsize=axlabsz)
