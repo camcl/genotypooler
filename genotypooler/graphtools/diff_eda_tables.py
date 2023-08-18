@@ -138,6 +138,8 @@ if af_data == 'maf':
 
 print('\nTrue data:')
 print(df0.head(10))
+# Zoom-in on variants in a given MAF range
+print(df0[0.02 < df0['aaf']][df0['aaf'] <= 0.05].iloc[:])
 if df3 is not None:
     print('\nOther data:')
     print(df3.head(10))

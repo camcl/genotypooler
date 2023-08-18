@@ -301,6 +301,7 @@ class QualityGL(object):
         self.trueobj = vcfdf.PandasMixedVCF(truefile, format='GL', indextype=idx, mask=mask)
         self.imputedobj = vcfdf.PandasMixedVCF(imputedfile, format=fmt, indextype=idx, mask=mask)
         self._axis = ax
+        self.fmt = fmt
 
     @property
     def axis(self):
@@ -334,9 +335,14 @@ class QualityGL(object):
                               columns=['RR', 'RA', 'AA'])
         # GL are logged!
 
-        dfpred = pd.DataFrame.from_records(g_pred.values,
-                                           index=g_pred.index,
-                                           columns=['RR', 'RA', 'AA']).astype(float)
+        if self.fmt == 'GP':
+            dfpred = pd.DataFrame.from_records(g_pred.values,
+                                               index=g_pred.index,
+                                               columns=['RR', 'RA', 'AA']).astype(float)
+        elif self.fmt == 'GL':
+            dfpred = pd.DataFrame.from_records(g_pred.values,
+                                               index=g_pred.index,
+                                               columns=['RR', 'RA', 'AA']).astype(float).pow(10)
 
         g_entro = compute_entro_numba(dftrue, dfpred)  # using Numba speeds up execution by a factor of 5-6
 
