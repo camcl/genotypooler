@@ -1,13 +1,31 @@
 """
-Git: Commit this script to a new branch?
+This script compare the datasets 1 and 2 (VCF files in log-GL format) and
+identifies what genotypes (variants x samples) which have (not) equal probabilities in the two data sets.
+Equality is asserted with a tolerance epsilon = 1e-05,
+that is two genotype probabilities are tagged as equal if delta <= epsilon.
+In the case of consecutive cycles of pooling and decoding performed with randompoolertune,
+genotypes found as being not equal correspond to the data points whose prior probabilities are corrected from 1 to 2.
 
-Compare datasets 1 and 2: what genotypes (variants x samples) got changed priors from 1 to 2?
-Epsilon for change = 1e-05, unchanged if delta <= epsilon.
+The datasets 1 and 2 must contain the same samples and the same variants, sorted in the same order.
+The result of the comparison is written to an output VCF file.
 
-Some kind of masked array?
-Find a way to write the masked arrays to VCF? (just reuses the quantiles scripts on the "masked" VCF then)
-How to represent a masked value in a VCF-friendly format? Missing entry?
-How to compute the metrics with missing entries in the data set?
+If the parameter `change` is set to `True` (default value), only the genotypes from the dataset 2
+that have a different (changed) value in the dataset 1 are written to the output file, in GP format.
+Unchanged genotypes are written as dot characters ('.').
+
+For example, given a variant and 4 samples:
+
+If some genotypes in the data set 1 (cycle1/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz) are:
+-0.30103,-12,-0.30103   -0.30103,-12,-0.30103	-0.30103,-12,-0.30103	        -0.30103,-12,-0.30103
+
+and the corresponding values in the dataset 2 (cycle2/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz) are:
+-0.301027,-12,-0.30103	-0.301023,-12,-0.30103	-0.279717,-11.9787,-0.30103     -0.296329,-11.9953,-0.30103
+
+the following GP values are written to the output VCF (cycle2/STU.Chr1.SNPs.pruned.sorted.pooled.changed_priors.vcf.gz):
+.	                    .	                    0.52515,1.0503e-12,0.5	        0.505442,1.01088e-12,0.5
+
+The output data can later be used for creating a data mask, where the '.' entries are interpreted as True or False.
+An example of mask creation can be found at the end of the script.
 """
 
 import numpy as np
@@ -23,9 +41,9 @@ sys.path.insert(0, rootdir)
 from genotypooler.poolSNPs import dataframe as vcfdf
 from genotypooler.poolSNPs import pybcf
 
-changes = True  # False --> unchanged priors (not working?)
-prev_cycle = 31
-parent_dir = "/home/camille/IterDecodeImpute/runs/poolimputeSNPs/results/data/1/20230605/"
+changes = True  # True: write in output VCF only logGL that were changed / False --> unchanged priors (not working?)
+prev_cycle = 21
+parent_dir = "/home/camille/IterDecodeImpute/runs/poolimputeSNPs/results/data/1/20230821/"
 vcf1 = parent_dir + f"cycle{prev_cycle}/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz"  # (log) GL
 vcf2 = parent_dir + f"cycle{prev_cycle + 1}/STU.Chr1.SNPs.pruned.sorted.pooled.vcf.gz"  # (log) GL
 vcfout = parent_dir + f"cycle{prev_cycle + 1}/STU.Chr1.SNPs.pruned.sorted.pooled.changed_priors.vcf"  # write as text i.e. uncompressed
@@ -57,7 +75,7 @@ class VariantRecordDiff(object):
 
     def _diff_prior_null(self, prior1: np.ndarray, prior2: np.ndarray) -> bool:
         """Test whether two priors represented as GL(RR, RA, AA) are equal"""
-        # if np.equal(prior1, prior2).all():
+        # if np.equal(prior1, prior2).all():  # strict equality
         #     return True
         # else:
         #     return False
@@ -177,7 +195,7 @@ dfobj = vcfdf.PandasMixedVCF(vcfout + '.gz', format='GP', indextype='id', mask=N
 gdata = dfobj.genotypes()
 gdf = gdata.applymap(lambda x: None if x[0] is None else x)
 garr = gdf.values
-gbool = gdf.applymap(lambda x: True if x is None else False)  # np.full_like(garr, True)
+gbool = gdf.applymap(lambda x: True if x is None else False)
 gmasked = np.ma.array(gdata, mask=gbool)
 
 print('\n')
