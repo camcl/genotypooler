@@ -56,7 +56,7 @@ class VariantRecordDiff(object):
     def __init__(self, var: pysam.VariantRecord,
                  format_to: str = 'GP', wd: str = os.getcwd()):
         """
-        ...
+        Instantiate a (deep) copy of the variant record.
         """
         self.var = var.copy()
         assert ('GL' in dict(self.var.format)),  'Reading from other format than GP not implemented'
@@ -74,8 +74,8 @@ class VariantRecordDiff(object):
         return np.asarray([v['GL'] for v in self.var.samples.values()])
 
     def _diff_prior_null(self, prior1: np.ndarray, prior2: np.ndarray) -> bool:
-        """Test whether two priors represented as GL(RR, RA, AA) are equal"""
-        # if np.equal(prior1, prior2).all():  # strict equality
+        """Test whether two priors represented as GL(RR, RA, AA) are equal with a tolerance atol"""
+        # if np.equal(prior1, prior2).all():  # strict equality i.e. null tolerance
         #     return True
         # else:
         #     return False
@@ -117,9 +117,6 @@ class VariantFileDiff(object):
     """
     def __init__(self, path_in: str, path_out: str,
                  format_to: str = 'GP', wd: str = os.getcwd()):
-        """
-        ...
-        """
         self.vcf_in = pysam.VariantFile(path_in)
         self.path_in = path_in
         self.path_out = path_out
@@ -178,7 +175,8 @@ vf2 = pysam.VariantFile(vcf2)
 vfout = VariantFileDiff(vcf2, vcfout)
 vfout.write(vf1, vf2, changes)
 
-# Test reading the file that was written
+# Read the file that was written (test)
+
 newvf = pysam.VariantFile(vcfout + '.gz')
 for n, record in enumerate(newvf.fetch()):
     if n < 10:
@@ -190,6 +188,7 @@ for n, record in enumerate(newvf.fetch()):
         print('\n')
 
 # Create a mask from the data (test)
+
 dfobj = vcfdf.PandasMixedVCF(vcfout + '.gz', format='GP', indextype='id', mask=None)
 
 gdata = dfobj.genotypes()
