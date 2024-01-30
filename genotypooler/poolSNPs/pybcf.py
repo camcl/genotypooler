@@ -261,7 +261,8 @@ def get_first_pos(f: FilePath, wd: str) -> None:
 
 def view_one_variant(f: FilePath, pos: str, chrom: str = '20', wd=os.getcwd()) -> None:
     """
-        Extract a given variant on CHROM:POS identifier and create a VCF file from it.
+        Extract a given variant on CHROM:POS identifier, create a VCF file from it
+        and index the VCF.
         :param f:
         :param wd:
         :return:
@@ -271,6 +272,12 @@ def view_one_variant(f: FilePath, pos: str, chrom: str = '20', wd=os.getcwd()) -
                     '-r {}:{}'.format(chrom, pos),
                     '-Oz -o {}'.format(os.path.join(wd, filout)),
                     f
+                    ]) + ' && ' + ' '.join(['bcftools',
+                    'index -f',
+                    os.path.join(wd, filout)
                     ])
-    process = subprocess.run(cmd, shell=True, cwd=wd)
+
+
+    subprocess.run(cmd, shell=True, cwd=wd)
     return os.path.join(wd, filout)
+
