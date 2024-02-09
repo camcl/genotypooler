@@ -200,16 +200,6 @@ for dquant, f in dataquants.items():
                                   xlim=(x1, x2), ylim=(y1, y2),
                                   xticklabels=[0.02, 0.03, 0.04, 0.05, 0.06],
                                   yticklabels=np.arange(0.97, 1.0, 0.005))
-            axin1.plot(dataf[dataf.dataset == 1][dataf.quantiles == 0.5][x_data],
-                       dataf[dataf.dataset == 1][dataf.quantiles == 0.5][dquant],
-                       color='tab:blue',
-                       linewidth=3,
-                       label=None)
-            axin1.plot(dataf[dataf.dataset == 2][dataf.quantiles == 0.5][x_data],
-                       dataf[dataf.dataset == 2][dataf.quantiles == 0.5][dquant],
-                       color='tab:orange',
-                       linewidth=3,
-                       label=None)
         else:
             x1, x2, y1, y2 = 0.02, 0.06, 0.0, 0.5
             axin1 = gY.inset_axes([0.1, 0.5,
@@ -218,16 +208,16 @@ for dquant, f in dataquants.items():
                                   xlim=(x1, x2), ylim=(y1, y2),
                                   xticklabels=[0.02, 0.03, 0.04, 0.05, 0.06],
                                   yticklabels=np.arange(0.0, 0.5, 0.01))
-            axin1.plot(dataf[dataf.dataset == 1][dataf.quantiles == 0.5][x_data],
-                       dataf[dataf.dataset == 1][dataf.quantiles == 0.5][dquant],
-                       color='tab:blue',
-                       linewidth=3,
-                       label=None)
-            axin1.plot(dataf[dataf.dataset == 2][dataf.quantiles == 0.5][x_data],
-                       dataf[dataf.dataset == 2][dataf.quantiles == 0.5][dquant],
-                       color='tab:orange',
-                       linewidth=3,
-                       label=None)
+        axin1.plot(dataf[dataf.dataset == 1][dataf.quantiles == 0.5][x_data],
+                   dataf[dataf.dataset == 1][dataf.quantiles == 0.5][dquant],
+                   color='tab:blue',
+                   linewidth=3,
+                   label=None)
+        axin1.plot(dataf[dataf.dataset == 2][dataf.quantiles == 0.5][x_data],
+                   dataf[dataf.dataset == 2][dataf.quantiles == 0.5][dquant],
+                   color='tab:orange',
+                   linewidth=3,
+                   label=None)
         axin1.tick_params(labelsize=12)
         for border in  ['bottom', 'top', 'right', 'left']:
             axin1.spines[border].set_color('k')
